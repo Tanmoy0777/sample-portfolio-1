@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-label="Attribution model thumbnail">
+  <rect width="960" height="620" rx="34" fill="#09070d"/>
+  <rect x="40" y="42" width="880" height="536" rx="28" fill="#111017" stroke="#3b3444"/>
+  <text x="78" y="98" fill="#ffffff" font-family="Arial, sans-serif" font-size="30" font-weight="700">Multi-Touch Attribution</text>
+  <text x="78" y="128" fill="#aaa2b1" font-family="Arial, sans-serif" font-size="16">$2.4M closed revenue across 8 channels</text>
+  <g transform="translate(80 170)">
+    <circle cx="160" cy="160" r="120" fill="none" stroke="#1d1824" stroke-width="44"/>
+    <path d="M160 40 A120 120 0 0 1 268 107" fill="none" stroke="#C4687A" stroke-width="44" stroke-linecap="round"/>
+    <path d="M268 107 A120 120 0 0 1 224 264" fill="none" stroke="#5BA4A4" stroke-width="44" stroke-linecap="round"/>
+    <path d="M224 264 A120 120 0 0 1 65 232" fill="none" stroke="#C9A96E" stroke-width="44" stroke-linecap="round"/>
+    <path d="M65 232 A120 120 0 0 1 160 40" fill="none" stroke="#7B8CDE" stroke-width="44" stroke-linecap="round"/>
+    <text x="111" y="154" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" font-weight="700">3.2x</text>
+    <text x="103" y="184" fill="#aaa2b1" font-family="Arial, sans-serif" font-size="15">ROAS</text>
+  </g>
+  <g transform="translate(470 178)" font-family="Arial, sans-serif">
+    <rect width="350" height="60" rx="14" fill="#1a1117" stroke="#C4687A"/>
+    <text x="24" y="37" fill="#f4d9df" font-size="17" font-weight="700">LinkedIn under-credited by 18pp</text>
+    <rect y="82" width="350" height="60" rx="14" fill="#121a1b" stroke="#5BA4A4"/>
+    <text x="24" y="119" fill="#d6f1ef" font-size="17" font-weight="700">Email drives mid-funnel revenue</text>
+    <rect y="164" width="350" height="60" rx="14" fill="#1d190f" stroke="#C9A96E"/>
+    <text x="24" y="201" fill="#fff0c8" font-size="17" font-weight="700">Display spend reallocated</text>
+    <rect y="246" width="350" height="60" rx="14" fill="#15162a" stroke="#7B8CDE"/>
+    <text x="24" y="283" fill="#dce1ff" font-size="17" font-weight="700">6.3 average touches/deal</text>
+  </g>
+</svg>

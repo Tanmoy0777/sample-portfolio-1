@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-label="Revenue operations dashboard thumbnail">
+  <rect width="960" height="620" rx="34" fill="#08060a"/>
+  <rect x="34" y="34" width="892" height="552" rx="26" fill="#111016" stroke="#3c3348"/>
+  <rect x="68" y="74" width="824" height="54" rx="14" fill="#17131d"/>
+  <text x="92" y="108" fill="#eae5ec" font-family="Arial, sans-serif" font-size="22" font-weight="700">Full-Funnel RevOps Dashboard</text>
+  <circle cx="844" cy="101" r="8" fill="#5BA4A4"/>
+  <text x="858" y="106" fill="#5BA4A4" font-family="Arial, sans-serif" font-size="13" font-weight="700">LIVE</text>
+  <g transform="translate(68 158)">
+    <rect width="128" height="82" rx="16" fill="#131b1d" stroke="#5BA4A4"/>
+    <text x="18" y="32" fill="#5BA4A4" font-family="Arial, sans-serif" font-size="13">MQLs</text>
+    <text x="18" y="64" fill="#ffffff" font-family="Arial, sans-serif" font-size="28" font-weight="700">3,842</text>
+    <rect x="146" width="128" height="82" rx="16" fill="#1f1418" stroke="#C4687A"/>
+    <text x="164" y="32" fill="#C4687A" font-family="Arial, sans-serif" font-size="13">Pipeline</text>
+    <text x="164" y="64" fill="#ffffff" font-family="Arial, sans-serif" font-size="28" font-weight="700">$4.2M</text>
+    <rect x="292" width="128" height="82" rx="16" fill="#1f1a10" stroke="#C9A96E"/>
+    <text x="310" y="32" fill="#C9A96E" font-family="Arial, sans-serif" font-size="13">SQL Rate</text>
+    <text x="310" y="64" fill="#ffffff" font-family="Arial, sans-serif" font-size="28" font-weight="700">24.7%</text>
+  </g>
+  <g transform="translate(68 272)">
+    <rect width="500" height="240" rx="18" fill="#0c0b10" stroke="#272331"/>
+    <text x="22" y="38" fill="#cfc8d6" font-family="Arial, sans-serif" font-size="15" font-weight="700">Monthly MQL Volume vs Closed Revenue</text>
+    <polyline points="36,186 74,170 112,178 150,152 188,134 226,111 264,122 302,96 340,74 378,62 416,82 454,58" fill="none" stroke="#C4687A" stroke-width="5" stroke-linecap="round"/>
+    <g fill="#5BA4A4" opacity=".72">
+      <rect x="34" y="132" width="20" height="72" rx="4"/><rect x="72" y="116" width="20" height="88" rx="4"/>
+      <rect x="110" y="126" width="20" height="78" rx="4"/><rect x="148" y="102" width="20" height="102" rx="4"/>
+      <rect x="186" y="86" width="20" height="118" rx="4"/><rect x="224" y="70" width="20" height="134" rx="4"/>
+      <rect x="262" y="82" width="20" height="122" rx="4"/><rect x="300" y="56" width="20" height="148" rx="4"/>
+      <rect x="338" y="36" width="20" height="168" rx="4"/><rect x="376" y="28" width="20" height="176" rx="4"/>
+      <rect x="414" y="52" width="20" height="152" rx="4"/><rect x="452" y="34" width="20" height="170" rx="4"/>
+    </g>
+  </g>
+  <g transform="translate(604 272)">
+    <rect width="288" height="240" rx="18" fill="#0c0b10" stroke="#272331"/>
+    <text x="22" y="38" fill="#cfc8d6" font-family="Arial, sans-serif" font-size="15" font-weight="700">Conversion Funnel</text>
+    <rect x="28" y="68" width="220" height="28" rx="6" fill="#5BA4A4"/>
+    <rect x="28" y="110" width="154" height="28" rx="6" fill="#7B8CDE"/>
+    <rect x="28" y="152" width="98" height="28" rx="6" fill="#C9A96E"/>
+    <rect x="28" y="194" width="56" height="28" rx="6" fill="#C4687A"/>
+  </g>
+</svg>

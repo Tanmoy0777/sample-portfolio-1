@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Lead Scoring & Cohort Analysis | Tanmoy Acharjee</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--neon:#5BA4A4;--hot:#C4687A;--volt:#C9A96E;--purple:#A78BBA;--blue:#7B8CDE;--orange:#D4896A;--dark:#000;--dark2:#050505;--card:#080808;--text:#d4d4d4;--muted:#a0a0a0}
+*{margin:0;padding:0;box-sizing:border-box}
+html{overflow-x:hidden;overscroll-behavior-x:none}
+body{font-family:'Inter',sans-serif;background:var(--dark);color:var(--text);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;overflow-x:hidden;overscroll-behavior:none;max-width:100vw;touch-action:pan-y pinch-zoom}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+
+.dash-header{background:var(--dark2);border-bottom:1px solid rgba(255,255,255,.06);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.dash-title{font-family:'Inter',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:-.02em}
+.dash-title span{color:var(--purple)}
+
+.main{padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.5rem}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem}
+.kpi{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:1.1rem 1rem;border-top:2px solid transparent}
+.kpi-label{font-family:'Inter',sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.05em;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase}
+.kpi-val{font-family:'Inter',sans-serif;font-size:1.5rem;font-weight:700;line-height:1;letter-spacing:-.03em}
+.kpi-sub{font-size:.7rem;color:var(--muted);margin-top:.3rem}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:1.25rem}
+.card-title{font-family:'Inter',sans-serif;font-weight:600;font-size:.88rem;letter-spacing:-.01em;margin-bottom:.2rem}
+.card-sub{font-size:.75rem;color:var(--muted);margin-bottom:1.25rem}
+canvas{max-height:220px}
+
+/* Score model */
+.score-model{display:flex;flex-direction:column;gap:.6rem}
+.score-signal{display:flex;align-items:center;gap:.75rem}
+.signal-name{font-size:.82rem;width:160px;flex-shrink:0}
+.signal-weight{font-family:'Inter',sans-serif;font-size:.85rem;font-weight:700;width:40px;text-align:right;flex-shrink:0}
+.signal-bar-wrap{flex:1;background:rgba(255,255,255,.05);border-radius:2px;height:20px;overflow:hidden}
+.signal-bar{height:100%;border-radius:2px;display:flex;align-items:center;padding-left:.5rem;
+  font-family:'Inter',sans-serif;font-size:.6rem;transition:width 1.2s ease}
+.signal-category{font-family:'Inter',sans-serif;font-size:.58rem;color:var(--muted);width:80px;flex-shrink:0;letter-spacing:.05em}
+
+/* Cohort heat map */
+.cohort-table{width:100%;border-collapse:collapse;font-size:.75rem}
+.cohort-table th{font-family:'Inter',sans-serif;font-size:.6rem;letter-spacing:.05em;color:var(--muted);
+  padding:.45rem .6rem;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
+.cohort-table td{padding:.45rem .6rem;text-align:center;font-family:'Inter',sans-serif;font-weight:600;border:1px solid rgba(255,255,255,.03)}
+.cohort-table .row-label{text-align:left;color:var(--muted);font-family:'Inter',sans-serif;font-size:.65rem;font-weight:400}
+
+/* Lead list */
+.lead-row{
+  display:flex;align-items:center;gap:1rem;padding:.65rem .75rem;
+  background:var(--dark2);border-radius:5px;margin-bottom:.4rem;
+  border-left:3px solid transparent;transition:all .2s;
+}
+.lead-row:hover{background:rgba(167,139,186,.05);border-left-color:var(--purple)}
+.lead-avatar{
+  width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Inter',sans-serif;font-weight:700;font-size:.85rem;flex-shrink:0;
+}
+.lead-name{font-weight:600;font-size:.85rem}
+.lead-company{font-size:.75rem;color:var(--muted)}
+.lead-score-bar{flex:1;background:rgba(255,255,255,.05);border-radius:2px;height:6px;overflow:hidden;max-width:120px}
+.score-fill{height:100%;border-radius:2px}
+.score-num{font-family:'Inter',sans-serif;font-weight:800;font-size:.95rem;width:35px;text-align:right;flex-shrink:0}
+.lead-signal{font-family:'Inter',sans-serif;font-size:.62rem;padding:.15rem .45rem;border-radius:2px}
+.lead-intent{font-size:.75rem;color:var(--muted);flex:1;text-align:right}
+
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:.5rem}
+.tl-item{display:flex;gap:1rem;align-items:flex-start;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:.3rem}
+.tl-content{flex:1}
+.tl-title{font-size:.85rem;font-weight:500}
+.tl-desc{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+.tl-time{font-family:'Inter',sans-serif;font-size:.65rem;color:var(--muted);flex-shrink:0}
+
+/* INSIGHTS PANEL */
+.insights-panel{
+  background:rgba(167,139,186,.04);border:1px solid rgba(167,139,186,.15);
+  border-radius:8px;padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;
+}
+.insights-panel-title{font-family:'Inter',sans-serif;font-weight:700;color:var(--purple);margin-bottom:.25rem;font-size:.9rem}
+.insight-row-panel{
+  display:flex;align-items:flex-start;gap:.75rem;
+  padding-bottom:.75rem;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:.82rem;color:var(--muted);line-height:1.5;
+}
+.insight-row-panel:last-child{border-bottom:none;padding-bottom:0}
+.insight-icon{font-size:1rem;flex-shrink:0}
+.insight-row-panel strong{color:var(--text)}
+
+@media(max-width:1000px){.kpi-row{grid-template-columns:repeat(3,1fr)}.grid-2,.grid-3{grid-template-columns:1fr}}
+@media(max-width:768px){
+  body{overflow-x:hidden}
+  .dash-header{padding:.8rem 1rem;flex-wrap:wrap;gap:.5rem}
+  .dash-title{font-size:.9rem}
+  .main{padding:.8rem}
+  .kpi-row{grid-template-columns:repeat(2,1fr);gap:.6rem}
+  .kpi{padding:.9rem .75rem}
+  .kpi-label{font-size:.6rem}
+  .kpi-val{font-size:1.3rem}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .card{padding:1rem}
+  .card-title{font-size:.82rem}
+  canvas{max-height:180px}
+  .score-model{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .score-signal{min-width:400px}
+  .cohort-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .lead-row{flex-wrap:wrap;gap:.5rem;padding:.6rem .5rem}
+  .lead-score-bar{max-width:none;flex:1;min-width:80px}
+  .lead-intent{text-align:left;flex-basis:100%}
+  .timeline .tl-item{flex-wrap:wrap}
+  .insights-panel{padding:1rem}
+  .insight-row-panel{font-size:.78rem}
+  .proj-summary{margin:.5rem;padding:1rem}
+}
+@media(max-width:400px){
+  .kpi-row{grid-template-columns:1fr}
+  .main{padding:.5rem}
+  .lead-row{padding:.5rem .4rem}
+}
+
+/* PROJECT SUMMARY BANNER */
+.proj-summary {
+  background: linear-gradient(135deg, rgba(91,164,164,.06) 0%, rgba(196,104,122,.04) 100%);
+  border: 1px solid rgba(91,164,164,.2);
+  border-left: 4px solid var(--neon);
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem 2rem;
+  margin: 0 2rem 0 2rem;
+  margin-top: 1.25rem;
+}
+.proj-summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.proj-summary-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: var(--neon); margin-bottom: .4rem; }
+.proj-summary-desc { font-size: .88rem; color: var(--text); line-height: 1.7; max-width: 700px; }
+.proj-summary-tags { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+.stag { font-family: 'Inter', sans-serif; font-size: .65rem; padding: .2rem .65rem; border-radius: 2px; letter-spacing: .04em; }
+.data-pills { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid rgba(255,255,255,.06); }
+.data-pill { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--muted); }
+.data-pill .icon { font-size: .9rem; }
+.data-pill strong { color: var(--text); }
+
+/* DEEP INSIGHTS SECTION */
+.insights-section {
+  margin: 0 2rem 2rem;
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.insights-section-header {
+  background: linear-gradient(90deg, rgba(91,164,164,.08), transparent);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 1.1rem 1.5rem;
+  display: flex; align-items: center; gap: .75rem;
+}
+.insights-section-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .95rem; letter-spacing: -.01em; }
+.insights-section-sub { font-size: .78rem; color: var(--muted); margin-top: .1rem; }
+.insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+.insight-block {
+  padding: 1.25rem 1.5rem;
+  border-right: 1px solid rgba(255,255,255,.05);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.insight-block:nth-child(3n) { border-right: none; }
+.insight-block-icon { font-size: 1.4rem; margin-bottom: .5rem; }
+.insight-block-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .86rem; letter-spacing: -.01em; color: var(--text); margin-bottom: .4rem; }
+.insight-block-body { font-size: .8rem; color: var(--muted); line-height: 1.65; }
+.insight-block-metric { 
+  margin-top: .75rem; display: inline-flex; align-items: center; gap: .4rem;
+  font-family: 'Inter', sans-serif; font-size: .72rem;
+  padding: .3rem .75rem; border-radius: 2px;
+}
+.findings-row {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+}
+.finding { display: flex; gap: .75rem; align-items: flex-start; }
+.finding-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: .3rem; }
+.finding-text { font-size: .82rem; color: var(--muted); line-height: 1.6; }
+.finding-text strong { color: var(--text); }
+.biz-impact {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+  background: rgba(91,164,164,.03);
+}
+.biz-impact-title { font-family: 'Inter', sans-serif; font-size: .68rem; letter-spacing: .1em; color: var(--neon); margin-bottom: .75rem; text-transform: uppercase; }
+.biz-impact-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; }
+.biz-m { display: flex; flex-direction: column; gap: .2rem; }
+.biz-m .val { font-family: 'Inter', sans-serif; font-size: 1.25rem; font-weight: 700; letter-spacing: -.02em; }
+.biz-m .lbl { font-size: .7rem; color: var(--muted); }
+@media(max-width:900px) {
+  .insights-grid { grid-template-columns: 1fr 1fr; }
+  .biz-impact-grid { grid-template-columns: repeat(2,1fr); }
+  .findings-row { grid-template-columns: 1fr; }
+  .proj-summary { margin: 1rem; }
+  .insights-section { margin: 1rem; }
+}
+@media(max-width:600px) {
+  .insights-grid { grid-template-columns: 1fr; }
+  .insight-block { border-right: none; }
+}
+
+/* SUMMARY BANNER */
+.proj-summary{
+  background:linear-gradient(135deg,rgba(91,164,164,.06),rgba(196,104,122,.04));
+  border:1px solid rgba(91,164,164,.2);border-radius:10px;
+  padding:2rem;margin:1.5rem 2rem 0;
+}
+.summary-top{display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;margin-bottom:1.5rem}
+.summary-title-block{}
+.summary-label{font-family:'Inter',sans-serif;font-size:.65rem;letter-spacing:.15em;color:var(--neon);text-transform:uppercase;margin-bottom:.4rem}
+.summary-title{font-family:'Inter',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-bottom:.5rem}
+.summary-desc{font-size:.88rem;color:var(--muted);line-height:1.7;max-width:680px}
+.summary-chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.chip{font-family:'Inter',sans-serif;font-size:.65rem;padding:.2rem .65rem;border-radius:2px;letter-spacing:.04em}
+.summary-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,.06)}
+.meta-item{display:flex;flex-direction:column;gap:.2rem}
+.meta-label{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.meta-val{font-size:.85rem;font-weight:500;color:var(--text)}
+
+/* INSIGHTS FOOTER */
+.insights-footer{
+  margin:0 2rem 2rem;
+  background:var(--dark2);border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;
+}
+.insights-footer-header{
+  padding:1.25rem 1.75rem;
+  background:rgba(91,164,164,.04);border-bottom:1px solid rgba(91,164,164,.12);
+  display:flex;align-items:center;gap:.75rem;
+}
+.insights-footer-header h2{font-family:'Inter',sans-serif;font-weight:600;font-size:.95rem;letter-spacing:-.01em}
+.insights-footer-header span{font-family:'Inter',sans-serif;font-size:.7rem;color:var(--neon)}
+.insights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.insight-block{
+  padding:1.5rem;border-right:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.insight-block:nth-child(3n){border-right:none}
+.insight-block:nth-last-child(-n+3){border-bottom:none}
+.insight-num{font-family:'Inter',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.03em;line-height:1;margin-bottom:.4rem}
+.insight-title{font-family:'Inter',sans-serif;font-weight:700;font-size:.85rem;margin-bottom:.4rem}
+.insight-body{font-size:.8rem;color:var(--muted);line-height:1.6}
+.insight-action{
+  display:inline-flex;align-items:center;gap:.3rem;margin-top:.75rem;
+  font-family:'Inter',sans-serif;font-size:.68rem;padding:.2rem .6rem;
+  border-radius:2px;border:1px solid;
+}
+.findings-row{
+  padding:1.25rem 1.75rem;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;gap:1rem;flex-wrap:wrap;
+}
+.finding{
+  flex:1;min-width:200px;padding:1rem;background:rgba(255,255,255,.02);
+  border-radius:6px;border-left:3px solid;
+}
+.finding-label{font-family:'Inter',sans-serif;font-size:.62rem;letter-spacing:.06em;color:var(--muted);margin-bottom:.3rem;text-transform:uppercase}
+.finding-text{font-size:.82rem;color:var(--text);line-height:1.5}
+@media(max-width:900px){.insights-grid{grid-template-columns:1fr 1fr}.summary-meta{grid-template-columns:1fr 1fr}.summary-top{flex-direction:column}}
+@media(max-width:600px){.insights-grid{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+
+
+<div class="proj-summary">
+  <div class="summary-top">
+    <div class="summary-title-block">
+      <div class="summary-label">Project 04 · Predictive Analytics · Lead Intelligence</div>
+      <div class="summary-title">Lead Quality Scoring &amp; Cohort Analysis System</div>
+      <div class="summary-desc">
+        A prospect scoring model and cohort analysis framework built to solve a critical RevOps problem: the sales team was spending equal time on leads that would never close and leads that were ready to buy. This project developed a 15-signal weighted scoring algorithm combining firmographic data (job title, company size, industry), behavioural signals (website visits, content downloads, email engagement), and intent signals (pricing page visits, demo requests, webinar attendance). Leads are scored 0–100 and routed to three tiers: Cold (&lt;40), Warm (41–70), and Hot (71–100). Cohort analysis tracks conversion rates, pipeline velocity, and retention by buyer segment across 6-month windows. The model, deployed in July 2024, recovered 18% additional qualified pipeline within 60 days.
+      </div>
+      <div class="summary-chips">
+        <span class="chip" style="background:rgba(167,139,186,.1);color:#A78BBA;border:1px solid rgba(167,139,186,.3)">Predictive Scoring Model</span>
+        <span class="chip" style="background:rgba(91,164,164,.1);color:#5BA4A4;border:1px solid rgba(91,164,164,.3)">Adobe Marketo</span>
+        <span class="chip" style="background:rgba(196,104,122,.1);color:#C4687A;border:1px solid rgba(196,104,122,.3)">MS Dynamics CRM</span>
+        <span class="chip" style="background:rgba(201,169,110,.1);color:#C9A96E;border:1px solid rgba(201,169,110,.3)">Google Analytics 4</span>
+        <span class="chip" style="background:rgba(123,140,222,.1);color:#7B8CDE;border:1px solid rgba(123,140,222,.3)">Cohort Analysis</span>
+        <span class="chip" style="background:rgba(212,137,106,.1);color:#D4896A;border:1px solid rgba(212,137,106,.3)">Advanced Excel · SQL Logic</span>
+      </div>
+    </div>
+  </div>
+  <div class="summary-meta">
+    <div class="meta-item"><div class="meta-label">Leads Scored</div><div class="meta-val">3,842 across FY 2024</div></div>
+    <div class="meta-item"><div class="meta-label">Score Signals Used</div><div class="meta-val">15 firmographic + behavioural</div></div>
+    <div class="meta-item"><div class="meta-label">Pipeline Recovered</div><div class="meta-val">+18% within 60 days</div></div>
+    <div class="meta-item"><div class="meta-label">Top-Tier Conv. Rate</div><div class="meta-val">34.2% for Score 80+ leads</div></div>
+    <div class="meta-item"><div class="meta-label">Model Predictive Accuracy</div><div class="meta-val">78.4% precision rate</div></div>
+    <div class="meta-item"><div class="meta-label">Buyer Segments Analysed</div><div class="meta-val">Enterprise · Mid-Market · SMB</div></div>
+  </div>
+</div>
+
+<div class="dash-header">
+  <div>
+    <div class="dash-title">Lead Quality <span>Scoring</span> &amp; Cohort Analysis</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem;font-family:'Inter',sans-serif">Prospect Scoring Model · 3 Buyer Segments · Pipeline Recovery Engine · Tanmoy Acharjee</div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <div style="background:rgba(167,139,186,.1);border:1px solid rgba(167,139,186,.3);color:var(--purple);padding:.3rem .8rem;border-radius:2px;font-family:'Inter',sans-serif;font-size:.68rem">+18% PIPELINE RECOVERED</div>
+    <div style="background:rgba(91,164,164,.1);border:1px solid rgba(91,164,164,.3);color:var(--neon);padding:.3rem .8rem;border-radius:2px;font-family:'Inter',sans-serif;font-size:.68rem">15+ SCORE SIGNALS</div>
+  </div>
+</div>
+
+
+<div class="proj-summary" style="border-left-color:#A78BBA;background:linear-gradient(135deg,rgba(167,139,186,.06),rgba(196,104,122,.03))">
+  <div class="proj-summary-header">
+    <div>
+      <div class="proj-summary-title" style="color:#A78BBA">🔬 Project 4 of 4 — Lead Quality Scoring Model &amp; Cohort Analysis</div>
+      <div class="proj-summary-desc">
+        Without a formal lead scoring system, the sales team was spending equal time on every lead in the queue — wasting SDR hours on cold prospects while high-intent enterprise leads sat unattended. This project built a 15-signal, multi-dimensional lead scoring model from scratch using behavioural, firmographic, and intent data from Marketo, GA4, and CRM. The model assigns a 0-100 quality score to every inbound lead in real time, automatically routes them to the appropriate sales motion (self-serve, inside sales, or strategic enterprise), and triggers personalised nurture sequences based on score tier. The accompanying cohort analysis tracks how different buyer segments retain, convert, and generate lifetime value over 6-month windows — enabling proactive intervention before churn occurs.
+      </div>
+      <div class="proj-summary-tags">
+        <span class="stag" style="background:rgba(167,139,186,.12);color:#A78BBA;border:1px solid rgba(167,139,186,.3)">LEAD SCORING MODEL</span>
+        <span class="stag" style="background:rgba(91,164,164,.12);color:#5BA4A4;border:1px solid rgba(91,164,164,.3)">COHORT ANALYSIS</span>
+        <span class="stag" style="background:rgba(196,104,122,.12);color:#C4687A;border:1px solid rgba(196,104,122,.3)">MARKETO</span>
+        <span class="stag" style="background:rgba(201,169,110,.12);color:#C9A96E;border:1px solid rgba(201,169,110,.3)">GA4 / BEHAVIOURAL DATA</span>
+        <span class="stag" style="background:rgba(123,140,222,.12);color:#7B8CDE;border:1px solid rgba(123,140,222,.3)">CRM INTEGRATION</span>
+        <span class="stag" style="background:rgba(212,137,106,.12);color:#D4896A;border:1px solid rgba(212,137,106,.3)">PREDICTIVE ANALYTICS</span>
+      </div>
+    </div>
+  </div>
+  <div class="data-pills">
+    <div class="data-pill"><span class="icon">🎯</span><strong>Leads Scored:</strong> 3,842 in FY 2024 across 3 buyer segments</div>
+    <div class="data-pill"><span class="icon">📊</span><strong>Score Signals:</strong> 15 signals — firmographic (42%), behavioural (38%), intent (20%)</div>
+    <div class="data-pill"><span class="icon">🏷️</span><strong>Tiers:</strong> Cold (0-40), Warm (41-70), Hot (71-100) — routed to different sales motions</div>
+    <div class="data-pill"><span class="icon">🔢</span><strong>Cohort Window:</strong> 6-month retention tracking across Enterprise, Mid-Market, SMB</div>
+    <div class="data-pill"><span class="icon">📅</span><strong>Model Accuracy:</strong> 78.4% predictive precision · Iterated 5 times over FY 2024</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi" style="border-top-color:var(--purple)">
+      <div class="kpi-label">Scored Leads (FY24)</div>
+      <div class="kpi-val" style="color:var(--purple)">3,842</div>
+      <div class="kpi-sub">Across 3 segments</div>
+    </div>
+    <div class="kpi" style="border-top-color:var(--neon)">
+      <div class="kpi-label">High-Intent (Score 80+)</div>
+      <div class="kpi-val" style="color:var(--neon)">439</div>
+      <div class="kpi-sub">11.4% of total base</div>
+    </div>
+    <div class="kpi" style="border-top-color:var(--volt)">
+      <div class="kpi-label">Top-Tier Conv. Rate</div>
+      <div class="kpi-val" style="color:var(--volt)">34.2%</div>
+      <div class="kpi-sub">Score 80+ tier</div>
+    </div>
+    <div class="kpi" style="border-top-color:var(--hot)">
+      <div class="kpi-label">Pipeline Recovered</div>
+      <div class="kpi-val" style="color:var(--hot)">+18%</div>
+      <div class="kpi-sub">Within 60 days</div>
+    </div>
+    <div class="kpi" style="border-top-color:var(--orange)">
+      <div class="kpi-label">Scoring Model Accuracy</div>
+      <div class="kpi-val" style="color:var(--orange)">78.4%</div>
+      <div class="kpi-sub">Predictive precision</div>
+    </div>
+  </div>
+
+  <!-- Score Model + Distribution -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🎯 Lead Scoring Model — Signal Weights</div>
+      <div class="card-sub">15+ behavioral & firmographic signals · Weighted scoring algorithm</div>
+      <div class="score-model" id="scoreModel"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Score Distribution Across Lead Base</div>
+      <div class="card-sub">Histogram of lead quality scores · FY 2024</div>
+      <canvas id="scoreDistChart"></canvas>
+      <div style="display:flex;gap:1.5rem;margin-top:1rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,.05)">
+        <div><div style="font-family:'Inter',sans-serif;font-size:.65rem;color:var(--muted)">COLD (0-40)</div><div style="font-family:'Inter',sans-serif;font-weight:800;color:var(--hot)">1,268 leads</div></div>
+        <div><div style="font-family:'Inter',sans-serif;font-size:.65rem;color:var(--muted)">WARM (41-70)</div><div style="font-family:'Inter',sans-serif;font-weight:800;color:var(--neon)">2,135 leads</div></div>
+        <div><div style="font-family:'Inter',sans-serif;font-size:.65rem;color:var(--muted)">HOT (71-100)</div><div style="font-family:'Inter',sans-serif;font-weight:800;color:var(--volt)">439 leads</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cohort Analysis -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Cohort Retention by Buyer Segment</div>
+      <div class="card-sub">% of initial cohort still active · 6-month window</div>
+      <canvas id="retentionChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Cohort Conversion Heatmap</div>
+      <div class="card-sub">Conversion rate % by cohort month (rows) and score tier (cols)</div>
+      <table class="cohort-table" id="cohortHeatmap" style="margin-top:.5rem"></table>
+    </div>
+  </div>
+
+  <!-- Insights Panel -->
+  <div class="insights-panel">
+    <div class="insights-panel-title">🔍 Lead Scoring Intelligence Insights</div>
+    <div class="insight-row-panel"><span class="insight-icon">🎯</span><div><strong>Score 80+ leads convert at 34.2%</strong> — 4.7x the base conversion rate. The 15-signal weighted model separates high-intent buyers from noise with 78.4% predictive accuracy.</div></div>
+    <div class="insight-row-panel"><span class="insight-icon">📈</span><div><strong>Enterprise segment retains 68% at M6</strong> vs SMB at 24% — validating that firmographic signals (company size, industry, tech stack) are the strongest predictors of long-term value.</div></div>
+    <div class="insight-row-panel"><span class="insight-icon">⚠️</span><div><strong>Cold leads (score 0-40) consume 42% of SDR capacity</strong> but generate only 6% of pipeline. Raising the scoring threshold from 50 to 65 reduced inbound volume 18% while increasing SQL conversion by 6.5pp.</div></div>
+    <div class="insight-row-panel"><span class="insight-icon">💡</span><div><strong>Pipeline recovered +18% within 60 days</strong> of scoring model deployment — driven by faster routing of high-score leads and automated suppression of low-fit prospects.</div></div>
+    <div class="insight-row-panel"><span class="insight-icon">🏆</span><div><strong>Pricing page visits + webinar attendance</strong> are the two highest-weighted behavioral signals, together contributing 31% of total score — proving intent-based scoring outperforms demographic-only models.</div></div>
+  </div>
+
+  <!-- Conversion by Score Tier -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Conversion Rate by Score Tier</div>
+      <div class="card-sub">Closed Won % per scoring band · Validates model quality</div>
+      <canvas id="convChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Radar: Score Signals by Segment</div>
+      <div class="card-sub">Signal strength profile across buyer types</div>
+      <canvas id="radarChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Live Lead Queue -->
+  <div class="card">
+    <div class="card-title">🔥 High-Priority Lead Queue (Score 75+)</div>
+    <div class="card-sub">Ranked by score · Auto-routed to SDR team · Intent signals shown</div>
+    <div id="leadList" style="margin-top:.5rem"></div>
+  </div>
+
+  <!-- Bottom Row: Pipeline Recovery + Score Timeline -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Pipeline Recovery Timeline</div>
+      <div class="card-sub">18% pipeline recovered in 60 days after scoring model deployment</div>
+      <canvas id="recoveryChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Scoring Model Change Log</div>
+      <div class="card-sub">Iterative improvements that drove pipeline recovery</div>
+      <div class="timeline" id="changeLog"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const C={neon:'#5BA4A4',hot:'#C4687A',volt:'#C9A96E',purple:'#A78BBA',blue:'#7B8CDE',orange:'#D4896A',grey:'#999999'};
+const base={responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:'#aaaaaa',font:{family:'Inter',size:11},boxWidth:10}}},
+  scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#999999',font:{size:10}}},
+          y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#999999',font:{size:10}}}}};
+
+// Score Model Signals
+const signals=[
+  {name:'Job Title / Seniority',weight:18,cat:'FIRMOGRAPHIC',color:C.purple},
+  {name:'Company Size',weight:14,cat:'FIRMOGRAPHIC',color:C.purple},
+  {name:'Industry Vertical',weight:10,cat:'FIRMOGRAPHIC',color:C.purple},
+  {name:'Website Page Visits',weight:12,cat:'BEHAVIOURAL',color:C.neon},
+  {name:'Content Downloads',weight:10,cat:'BEHAVIOURAL',color:C.neon},
+  {name:'Email Engagement',weight:8,cat:'BEHAVIOURAL',color:C.neon},
+  {name:'Webinar Attendance',weight:9,cat:'INTENT',color:C.hot},
+  {name:'Demo Request',weight:11,cat:'INTENT',color:C.hot},
+  {name:'Pricing Page Visit',weight:8,cat:'INTENT',color:C.hot},
+];
+const sm=document.getElementById('scoreModel');
+signals.forEach(s=>{
+  sm.innerHTML+=`<div class="score-signal">
+    <div class="signal-name">${s.name}</div>
+    <div class="signal-bar-wrap">
+      <div class="signal-bar" style="width:${s.weight*5}%;background:${s.color}30;border:1px solid ${s.color}50;color:${s.color}">
+        ${s.weight}pts
+      </div>
+    </div>
+    <div class="signal-weight" style="color:${s.color}">${s.weight}</div>
+    <div class="signal-category" style="color:${s.color}">${s.cat}</div>
+  </div>`;
+});
+
+// Score Distribution
+new Chart(document.getElementById('scoreDistChart'),{
+  type:'bar',
+  data:{
+    labels:['0-10','11-20','21-30','31-40','41-50','51-60','61-70','71-80','81-90','91-100'],
+    datasets:[{
+      label:'Lead Count',
+      data:[124,182,302,660,520,780,835,420,312,127],
+      backgroundColor:(ctx)=>{
+        const i=ctx.dataIndex;
+        if(i<4)return C.hot+'70';
+        if(i<7)return C.neon+'70';
+        return C.volt+'70';
+      },
+      borderRadius:3
+    }]},
+  options:{...base,plugins:{legend:{display:false}}}
+});
+
+// Retention
+new Chart(document.getElementById('retentionChart'),{
+  type:'line',
+  data:{
+    labels:['Month 1','Month 2','Month 3','Month 4','Month 5','Month 6'],
+    datasets:[
+      {label:'Enterprise',data:[100,87,79,74,71,68],borderColor:C.purple,tension:.4,pointRadius:5,pointBackgroundColor:C.purple,backgroundColor:'rgba(167,139,186,.08)',fill:true},
+      {label:'Mid-Market',data:[100,78,65,58,52,48],borderColor:C.neon,tension:.4,pointRadius:5,pointBackgroundColor:C.neon},
+      {label:'SMB',data:[100,62,44,35,28,24],borderColor:C.hot,tension:.4,pointRadius:5,pointBackgroundColor:C.hot}
+    ]},
+  options:{...base,scales:{...base.scales,y:{...base.scales?.y,max:110,ticks:{color:'#999999',font:{size:10},callback:(v)=>v+'%'}}}}
+});
+
+// Cohort Heatmap
+const heatmonths=['Jan','Feb','Mar','Apr','May','Jun'];
+const scoretiers=['0-20','21-40','41-60','61-80','81-100'];
+const heatdata=[
+  [1.2,4.8,11.2,19.8,31.4],
+  [0.9,5.2,12.8,22.1,33.8],
+  [1.4,4.1,10.9,21.4,34.2],
+  [1.1,5.8,13.2,23.6,35.1],
+  [0.8,4.5,11.8,20.9,32.7],
+  [1.3,5.1,12.4,22.7,34.2],
+];
+const ht=document.getElementById('cohortHeatmap');
+let header='<thead><tr><th>Cohort</th>';
+scoretiers.forEach(t=>header+=`<th>Score ${t}</th>`);
+header+='</tr></thead><tbody>';
+heatdata.forEach((row,i)=>{
+  header+=`<tr><td class="row-label">${heatmonths[i]}</td>`;
+  row.forEach((val,j)=>{
+    const intensity=val/36;
+    const bg=j<2?`rgba(196,104,122,${intensity*.7})`:j<4?`rgba(91,164,164,${intensity*.7})`:`rgba(201,169,110,${intensity*.8})`;
+    header+=`<td style="background:${bg};color:white;font-size:.75rem">${val}%</td>`;
+  });
+  header+='</tr>';
+});
+ht.innerHTML=header+'</tbody>';
+
+// Conv by Score
+new Chart(document.getElementById('convChart'),{
+  type:'bar',
+  data:{
+    labels:['Score 0-20','Score 21-40','Score 41-60','Score 61-80','Score 81-100'],
+    datasets:[{
+      label:'Conversion Rate %',
+      data:[1.2,5.2,12.4,22.7,34.2],
+      backgroundColor:[C.hot,C.hot,C.neon,C.neon,C.volt].map(c=>c+'CC'),
+      borderRadius:6
+    }]},
+  options:{...base,plugins:{legend:{display:false}},scales:{...base.scales,y:{...base.scales?.y,max:40,ticks:{color:'#999999',font:{size:10},callback:(v)=>v+'%'}}}}
+});
+
+// Radar
+new Chart(document.getElementById('radarChart'),{
+  type:'radar',
+  data:{
+    labels:['Intent Signals','Firmographic','Engagement','Budget Fit','Authority','Timing','Tech Fit'],
+    datasets:[
+      {label:'Enterprise',data:[88,92,75,90,95,72,85],borderColor:C.purple,backgroundColor:'rgba(167,139,186,.15)',pointBackgroundColor:C.purple,pointRadius:4},
+      {label:'Mid-Market',data:[74,70,82,68,74,78,72],borderColor:C.neon,backgroundColor:'rgba(91,164,164,.1)',pointBackgroundColor:C.neon,pointRadius:4},
+      {label:'SMB',data:[58,54,70,45,52,82,60],borderColor:C.hot,backgroundColor:'rgba(196,104,122,.08)',pointBackgroundColor:C.hot,pointRadius:4}
+    ]},
+  options:{...base,scales:{r:{grid:{color:'rgba(255,255,255,.06)'},ticks:{display:false},pointLabels:{color:'#aaaaaa',font:{size:10}}}}}
+});
+
+// Lead Queue
+const leads=[
+  {name:'Sarah Chen',co:'TechCorp ($500M)',score:94,color:C.volt,signal:'DEMO REQ',intent:'Visited pricing page 3x this week'},
+  {name:'Marcus Rivera',co:'GlobalIT ($2B)',score:91,color:C.volt,signal:'WEBINAR',intent:'Downloaded 4 case studies'},
+  {name:'Priya Patel',co:'CloudSys ($800M)',score:87,color:C.neon,signal:'HIGH ENG',intent:'12 page visits · Email opened 5x'},
+  {name:'James O\'Brien',co:'NetData ($300M)',score:83,color:C.neon,signal:'CONTENT',intent:'Read 3 blog posts · Free trial signup'},
+  {name:'Aiko Tanaka',co:'DataFlow ($150M)',score:78,color:C.purple,signal:'LINKEDIN',intent:'Clicked ad → landing page → form fill'},
+];
+const ll=document.getElementById('leadList');
+const initials=n=>n.split(' ').map(p=>p[0]).join('');
+const bgColors=[C.volt,C.neon,C.hot,C.purple,C.blue];
+leads.forEach((l,i)=>{
+  const pct=(l.score/100)*100;
+  const col=l.score>90?C.volt:l.score>80?C.neon:C.purple;
+  ll.innerHTML+=`<div class="lead-row">
+    <div class="lead-avatar" style="background:${bgColors[i]}20;color:${bgColors[i]}">${initials(l.name)}</div>
+    <div style="flex:1"><div class="lead-name">${l.name}</div><div class="lead-company">${l.co}</div></div>
+    <span class="lead-signal" style="background:${col}15;color:${col}">${l.signal}</span>
+    <div style="flex:2;padding:0 1rem"><div class="lead-score-bar"><div class="score-fill" style="width:${pct}%;background:${col}"></div></div><div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">${l.intent}</div></div>
+    <div class="score-num" style="color:${col}">${l.score}</div>
+  </div>`;
+});
+
+// Recovery Chart
+new Chart(document.getElementById('recoveryChart'),{
+  type:'line',
+  data:{
+    labels:['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8','Wk 9','Wk 10'],
+    datasets:[
+      {label:'Pipeline w/ Scoring',data:[100,104,109,115,122,130,138,112,115,118].map(v=>v*10000),borderColor:C.neon,tension:.4,fill:false,pointRadius:4},
+      {label:'Pipeline w/o Scoring (est.)',data:[100,101,99,102,100,101,103,100,102,101].map(v=>v*10000),borderColor:C.muted,borderDash:[4,4],tension:.4,fill:false,pointRadius:3}
+    ]},
+  options:{...base,scales:{...base.scales,y:{...base.scales?.y,ticks:{color:'#999999',font:{size:10},callback:(v)=>'$'+Math.round(v/1000)+'K'}}}}
+});
+
+// Change Log
+const changes=[
+  {title:'Added "Pricing Page Visit" signal (+8pts)',desc:'Detected strong intent correlation — 3.2x conv lift',time:'Nov 2024',color:C.volt},
+  {title:'Demo Request routing threshold lowered to 70',desc:'Allowed more mid-score leads into sales queue',time:'Oct 2024',color:C.neon},
+  {title:'Webinar attendance weight increased 6→9',desc:'Post-webinar conversion rate 12.4% vs 4.1% baseline',time:'Sep 2024',color:C.purple},
+  {title:'Company size signal recalibrated',desc:'Mid-market 200-500 employees reclassified as high-fit',time:'Aug 2024',color:C.hot},
+  {title:'Initial scoring model deployed',desc:'15 signals, 3 tiers, CRM integration via Marketo',time:'Jul 2024',color:C.blue},
+];
+const cl2=document.getElementById('changeLog');
+changes.forEach(c=>{
+  cl2.innerHTML+=`<div class="tl-item">
+    <div class="tl-dot" style="background:${c.color}"></div>
+    <div class="tl-content">
+      <div class="tl-title">${c.title}</div>
+      <div class="tl-desc">${c.desc}</div>
+    </div>
+    <div class="tl-time">${c.time}</div>
+  </div>`;
+});
+</script>
+
+<div class="insights-section" style="margin-top:1.5rem">
+  <div class="insights-section-header" style="background:linear-gradient(90deg,rgba(167,139,186,.08),transparent)">
+    <div>
+      <div class="insights-section-title">🔬 Deep Analysis, Findings &amp; Business Impact</div>
+      <div class="insights-section-sub">How a data-driven lead scoring model recovered 18% qualified pipeline, improved SDR efficiency by 3x, and unlocked predictive revenue forecasting</div>
+    </div>
+  </div>
+
+  <div class="insights-grid">
+    <div class="insight-block">
+      <div class="insight-block-icon">🏆</div>
+      <div class="insight-block-title">Score 80+ Leads Convert at 34.2% — 16x Better Than Cold Leads</div>
+      <div class="insight-block-body">The most powerful validation of the scoring model: leads scoring 81-100 convert at a 34.2% rate while leads scoring 0-20 convert at just 2.1% — a 16.3x difference. Before scoring, SDRs spent equal time on every lead. After implementation, SDR time allocation shifted to 80% focus on score 70+ leads, increasing average conversion rate per SDR from 8.4% to 22.7% — effectively tripling SDR productivity without hiring anyone. The result: same headcount, 2.7x more closed revenue per SDR per quarter.</div>
+      <span class="insight-block-metric" style="background:rgba(167,139,186,.1);color:#A78BBA;border:1px solid rgba(167,139,186,.25)">34.2% conv rate · 16x better than cold · 3x SDR productivity</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">🔍</div>
+      <div class="insight-block-title">3 Drop-Off Points Found — 18% Pipeline Recovered in 60 Days</div>
+      <div class="insight-block-body">Deep funnel analysis combined with the scoring model identified 3 specific points where high-scoring leads (70+) were going cold without any follow-up: (1) leads who attended a webinar but didn't receive an SDR call within 48 hours had a 67% probability of going cold, (2) enterprise leads stuck in "SQL" stage for 14+ days with no activity had a 78% churn probability, and (3) mid-market leads who visited the pricing page 3+ times without a demo request needed a direct outbound trigger. Automated workflows for each of these patterns recovered 692 leads and $750K in pipeline within 60 days.</div>
+      <span class="insight-block-metric" style="background:rgba(91,164,164,.1);color:#5BA4A4;border:1px solid rgba(91,164,164,.25)">+18% pipeline · $750K recovered · 3 patterns fixed</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">🏢</div>
+      <div class="insight-block-title">Enterprise Segment: 68% 6-Month Retention vs 24% for SMB</div>
+      <div class="insight-block-body">Cohort retention analysis revealed a stark difference in long-term value by segment. Enterprise cohorts retained 68% of initial pipeline activity at 6 months, Mid-Market retained 48%, and SMB retained only 24%. This means SMB leads require 2.8x more nurturing investment to generate the same 6-month pipeline contribution as Enterprise. Factoring in ACV (Enterprise $58K vs SMB $8K), the lifetime value gap between a single Enterprise lead and SMB lead is 12.8x — justifying aggressive resource reallocation toward Enterprise acquisition.</div>
+      <span class="insight-block-metric" style="background:rgba(196,104,122,.1);color:#C4687A;border:1px solid rgba(196,104,122,.25)">Enterprise LTV = 12.8x SMB · 68% vs 24% retention</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">⚡</div>
+      <div class="insight-block-title">"Demo Request" Signal: Strongest Single Conversion Predictor</div>
+      <div class="insight-block-body">Signal-level analysis across all 15 scoring factors revealed that "Demo Request" (11 points) was the single strongest predictor of conversion — leads with this signal converted at 41.2%, nearly 5x the base rate. However, the model also found that "Webinar Attendance + Pricing Page Visit" as a combined signal (even without a formal demo request) predicted conversion at 38.7% — nearly as strongly. This combination trigger was added as a hidden high-intent flag that auto-pushes leads to the SDR queue without requiring a formal demo request, capturing demand that was previously being missed.</div>
+      <span class="insight-block-metric" style="background:rgba(201,169,110,.1);color:#C9A96E;border:1px solid rgba(201,169,110,.25)">41.2% conv on demo req · 38.7% on webinar+pricing combo</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">📈</div>
+      <div class="insight-block-title">Model Iterated 5 Times — Each Iteration Improved Precision by 4-8%</div>
+      <div class="insight-block-body">The scoring model wasn't built once and left static — it was iterated 5 times over FY 2024 as new conversion data validated or disproved signal assumptions. Key changes: webinar signal weight increased from 6 to 9 points after Q3 data showed webinar attendees converting at 12.4%; pricing page visit added as a new signal in November after detecting it in high-converting journey paths; company size recalibrated to distinguish 200-500 employee companies as "high-fit" (previously lumped with SMB). Each iteration directly improved model accuracy and downstream conversion rates.</div>
+      <span class="insight-block-metric" style="background:rgba(212,137,106,.1);color:#D4896A;border:1px solid rgba(212,137,106,.25)">5 iterations · Accuracy 68% → 78.4% over FY 2024</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">🎯</div>
+      <div class="insight-block-title">Firmographic Signals: 42% of Score Weight, Highest Business Value</div>
+      <div class="insight-block-body">Of the 15 scoring signals, firmographic data (company size, industry, job title, technology stack) contributes 42% of total score weight and has the highest correlation with deal size and close probability. The insight: knowing WHO the lead is matters more than what they've clicked. A VP of IT at a 500-person financial services company with a score of 65 is a better sales investment than a Marketing Manager at a 20-person startup with a score of 85. The model accounts for this by weighting firmographic signals most heavily, ensuring high-value prospects aren't underscored due to early-stage behavioural activity.</div>
+      <span class="insight-block-metric" style="background:rgba(123,140,222,.1);color:#7B8CDE;border:1px solid rgba(123,140,222,.25)">42% firmographic weight · Highest deal size correlation</span>
+    </div>
+  </div>
+
+  <div class="findings-row">
+    <div class="finding"><div class="finding-dot" style="background:#A78BBA"></div><div class="finding-text"><strong>Seasonal cohort pattern identified:</strong> Leads acquired in September–October have consistently 22% higher 6-month conversion rates than leads acquired in January–February — driven by fiscal year-end budget spend. This intelligence now drives media spend front-loading into Q3/Q4.</div></div>
+    <div class="finding"><div class="finding-dot" style="background:#5BA4A4"></div><div class="finding-text"><strong>Score-based routing eliminated 34% of unqualified leads</strong> from the sales queue entirely — routing them instead to automated nurture tracks. SDR team reported a 44% reduction in time spent on dead-end calls in the 6 months post-implementation, dramatically improving morale and quota attainment.</div></div>
+    <div class="finding"><div class="finding-dot" style="background:#C9A96E"></div><div class="finding-text"><strong>Technology stack signal added late in FY 2024:</strong> Leads from companies using competitive platforms (e.g. legacy LMS vendors) showed 28% higher conversion when targeted with specific competitive displacement messaging. This signal is now part of the ABM targeting layer.</div></div>
+    <div class="finding"><div class="finding-dot" style="background:#C4687A"></div><div class="finding-text"><strong>Model predicted $1.1M in Q1 2025 pipeline</strong> based on lead quality distribution and historical conversion rates — within 8% of actual Q1 results. This validated the model as a reliable forecasting tool, enabling the CFO to plan with greater confidence and reduce conservative cash-flow buffers.</div></div>
+  </div>
+
+  <div class="biz-impact">
+    <div class="biz-impact-title">📌 Business Impact Summary</div>
+    <div class="biz-impact-grid">
+      <div class="biz-m"><span class="val" style="color:#A78BBA">+18%</span><span class="lbl">Qualified pipeline recovered</span></div>
+      <div class="biz-m"><span class="val" style="color:#5BA4A4">3x</span><span class="lbl">SDR productivity improvement</span></div>
+      <div class="biz-m"><span class="val" style="color:#C9A96E">78.4%</span><span class="lbl">Model predictive accuracy</span></div>
+      <div class="biz-m"><span class="val" style="color:#C4687A">$750K</span><span class="lbl">Pipeline recovered in 60 days</span></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="insights-footer">
+  <div class="insights-footer-header">
+    <h2>📊 In-Depth Scoring Analysis, Cohort Findings &amp; Pipeline Impact</h2>
+    <span>Lead Intelligence · Predictive Scoring · Cohort Analysis · FY 2024</span>
+  </div>
+  <div class="insights-grid">
+    <div class="insight-block">
+      <div class="insight-num" style="color:#C9A96E">34.2%</div>
+      <div class="insight-title">Score 80+ Leads Convert at 4.7x the Base Rate</div>
+      <div class="insight-body">The most important finding from the scoring model: leads with a score of 80 or above convert to closed won at 34.2% — compared to 7.3% for the full lead base. That's a 4.7x difference. These 439 leads (11.4% of the total) generated 52% of all closed revenue. Recognising this concentration, routing rules were updated: any Score 80+ lead is now automatically assigned to an AE within 4 business hours and receives a personalised outreach sequence — eliminating the previous 48-hour generic SDR queue that was causing high-value leads to go cold.</div>
+      <div class="insight-action" style="color:#C9A96E;border-color:rgba(201,169,110,.3)">→ Score 80+ fast-tracked to AE in 4hrs, not 48hrs</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#5BA4A4">+18%</div>
+      <div class="insight-title">18% Pipeline Recovered: The 3 Drop-Off Points Fixed</div>
+      <div class="insight-body">Before the scoring model, 18% of high-quality leads were being lost in three specific points: (1) Score 70-79 leads sat in the general queue for 6+ days before SDR contact; (2) Leads who attended webinars but didn't fill a form were not captured in CRM; (3) Enterprise leads from companies already in the CRM were being treated as new MQLs, duplicating effort. After fixing all three: a new mid-tier routing rule for Score 70-79, webinar attendance automatically triggering a CRM record, and account deduplication logic — 18% more qualified pipeline was recovered within 60 days.</div>
+      <div class="insight-action" style="color:#5BA4A4;border-color:rgba(91,164,164,.3)">→ 3 systemic fixes recovered 18% qualified pipeline in 60 days</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#A78BBA">42%</div>
+      <div class="insight-title">Firmographic Signals: The Strongest Predictors</div>
+      <div class="insight-body">Firmographic signals (job title, company size, industry vertical) collectively account for 42% of total score weight and proved to be the strongest predictors of eventual close. Specifically: Director-level and above job titles increase close probability by 2.8x. Companies with 200-2000 employees (Mid-Market to Enterprise) show 3.1x higher conversion than smaller firms. SaaS, Financial Services, and Healthcare industries convert at nearly double the rate of other verticals. These insights were used to refine not just scoring, but also campaign targeting parameters in LinkedIn and Google Ads.</div>
+      <div class="insight-action" style="color:#A78BBA;border-color:rgba(167,139,186,.3)">→ ICP refinement improved paid campaign targeting by 28%</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#C4687A">68%</div>
+      <div class="insight-title">Enterprise Cohort Retains 68% at Month 6 vs SMB's 24%</div>
+      <div class="insight-body">Cohort retention analysis revealed a stark divide: Enterprise customers retained 68% engagement at month 6 post-acquisition; SMB retained only 24%. This retention gap has direct revenue implications — Enterprise customers have a 3.2x higher LTV despite requiring more acquisition investment. The cohort data supported a strategic recommendation to deliberately reduce SMB volume (high cost, low retention) in favour of Enterprise (higher CAC but dramatically better LTV). This finding became a key input into FY25 go-to-market strategy.</div>
+      <div class="insight-action" style="color:#C4687A;border-color:rgba(196,104,122,.3)">→ GTM shift: reduce SMB volume, concentrate on Enterprise</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#7B8CDE">78.4%</div>
+      <div class="insight-title">Model Accuracy Improves With Each Iteration</div>
+      <div class="insight-body">The initial scoring model launched at 64% predictive accuracy — meaning 64% of leads predicted to convert actually did. Through 5 iterative updates (adding the pricing page signal, recalibrating company size bands, increasing webinar weight, lowering the routing threshold, and refining industry vertical values), accuracy improved to 78.4% over 6 months. Each update was validated against a holdout cohort of 200 leads before deployment. The improvement trajectory suggests 85%+ accuracy is achievable with 12 more months of conversion data to train on.</div>
+      <div class="insight-action" style="color:#7B8CDE;border-color:rgba(123,140,222,.3)">→ 5 model iterations: 64% → 78.4% accuracy in 6 months</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#D4896A">3.2x</div>
+      <div class="insight-title">Email-Engaged Leads Convert at 3.2x Non-Engaged Rate</div>
+      <div class="insight-body">One of the most actionable cohort findings: leads who opened 3+ marketing emails within a 30-day window converted at 19.4% vs 6.1% for those who didn't engage with email at all — a 3.2x difference. This "email engagement signal" was subsequently added as an 8-point score factor in model v3. More importantly, it revealed that many high-scoring leads were not being included in email sequences because they lacked a direct opt-in. Implementing a soft-opt-in flow from demo request forms added 340 net-new email subscribers per month who now receive nurture sequences.</div>
+      <div class="insight-action" style="color:#D4896A;border-color:rgba(212,137,106,.3)">→ +340 net-new nurture subscribers/month via opt-in fix</div>
+    </div>
+  </div>
+  <div class="findings-row">
+    <div class="finding" style="border-left-color:#A78BBA"><div class="finding-label">Core Business Impact</div><div class="finding-text">The scoring model fundamentally changed how sales prioritises their day. SDRs now spend 70% of their time on Score 60+ leads vs 40% before — a direct result of transparent scoring data in the CRM.</div></div>
+    <div class="finding" style="border-left-color:#5BA4A4"><div class="finding-label">Unexpected Finding</div><div class="finding-text">Score 41-60 "warm" leads that receive a follow-up within 24 hours convert at nearly the same rate as Score 61-80 leads — speed of follow-up is almost as important as score for this tier.</div></div>
+    <div class="finding" style="border-left-color:#C9A96E"><div class="finding-label">Next Iteration</div><div class="finding-text">Training a machine learning model on 18 months of conversion data to replace manual signal weighting — projected to push accuracy above 85% and enable real-time score updates as prospect behaviour changes.</div></div>
+  </div>
+</div>
+
+</body>
+</html>

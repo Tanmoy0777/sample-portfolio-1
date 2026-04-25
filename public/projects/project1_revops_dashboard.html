@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Full-Funnel RevOps Dashboard | Tanmoy Acharjee</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--neon:#5BA4A4;--hot:#C4687A;--volt:#C9A96E;--purple:#A78BBA;--blue:#7B8CDE;--dark:#000;--dark2:#050505;--card:#080808;--card2:#0a0a0a;--text:#d4d4d4;--muted:#a0a0a0}
+*{margin:0;padding:0;box-sizing:border-box}
+html{overflow-x:hidden;overscroll-behavior-x:none}
+body{font-family:'Inter',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;overflow-x:hidden;overscroll-behavior:none;max-width:100vw;touch-action:pan-y pinch-zoom}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+
+/* HEADER */
+.dash-header{
+  background:var(--dark2);border-bottom:1px solid rgba(91,164,164,.15);
+  padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.dash-title{font-family:'Inter',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:-.02em}
+.dash-title span{color:var(--neon)}
+.dash-meta{display:flex;align-items:center;gap:1.5rem}
+.live-badge{
+  display:flex;align-items:center;gap:.4rem;
+  background:rgba(91,164,164,.1);border:1px solid rgba(91,164,164,.3);
+  padding:.3rem .8rem;border-radius:2px;
+  font-family:'Inter',sans-serif;font-size:.7rem;color:var(--neon);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--neon);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.date-label{font-family:'Inter',sans-serif;font-size:.7rem;color:var(--muted)}
+
+/* FILTERS */
+.filters{
+  padding:1rem 2rem;background:var(--dark);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;gap:1rem;align-items:center;flex-wrap:wrap;
+}
+.filter-label{font-family:'Inter',sans-serif;font-size:.7rem;color:var(--muted);letter-spacing:.05em}
+.filter-btn{
+  background:var(--card);border:1px solid rgba(255,255,255,.08);
+  color:var(--muted);padding:.35rem .9rem;border-radius:2px;
+  font-family:'Inter',sans-serif;font-size:.7rem;cursor:pointer;
+  transition:all .2s;letter-spacing:.03em;
+}
+.filter-btn.active,.filter-btn:hover{border-color:var(--neon);color:var(--neon);background:rgba(91,164,164,.08)}
+
+/* MAIN GRID */
+.dash-main{padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.5rem}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:1rem}
+.kpi{
+  background:var(--card);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:1.25rem 1rem;
+  border-top:2px solid transparent;position:relative;overflow:hidden;
+  transition:transform .2s,border-color .2s;
+}
+.kpi:hover{transform:translateY(-3px)}
+.kpi::after{
+  content:'';position:absolute;top:0;right:0;
+  width:60px;height:60px;border-radius:50%;
+  opacity:.07;transform:translate(20px,-20px);
+}
+.kpi-label{font-family:'Inter',sans-serif;font-size:.65rem;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem;text-transform:uppercase}
+.kpi-val{font-family:'Inter',sans-serif;font-size:1.7rem;font-weight:800;line-height:1}
+.kpi-change{
+  font-family:'Inter',sans-serif;font-size:.65rem;
+  margin-top:.4rem;display:flex;align-items:center;gap:.25rem;
+}
+.up{color:#6EAA7F}.down{color:var(--hot)}
+
+/* CHART GRID */
+.chart-row{display:grid;gap:1rem}
+.chart-row.cols-3{grid-template-columns:2fr 1fr 1fr}
+.chart-row.cols-2{grid-template-columns:1fr 1fr}
+.chart-row.cols-1{grid-template-columns:1fr}
+.chart-box{
+  background:var(--card);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:1.25rem;
+}
+.chart-box-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.25rem;
+}
+.chart-box-title{
+  font-family:'Inter',sans-serif;font-weight:700;font-size:.9rem;color:var(--text)
+}
+.chart-box-sub{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+.chart-tag{
+  font-family:'Inter',sans-serif;font-size:.65rem;
+  padding:.2rem .6rem;border-radius:2px;
+}
+canvas{max-height:220px}
+
+/* FUNNEL VIZ */
+.funnel-wrap{display:flex;flex-direction:column;gap:.5rem;padding:.5rem 0}
+.funnel-stage{display:flex;align-items:center;gap:.75rem}
+.funnel-bar-wrap{flex:1;background:rgba(255,255,255,.04);border-radius:2px;height:32px;overflow:hidden}
+.funnel-bar{height:100%;border-radius:2px;display:flex;align-items:center;padding-left:.75rem;
+  font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;transition:width 1s ease}
+.funnel-label{font-family:'Inter',sans-serif;font-size:.7rem;color:var(--muted);width:70px;text-align:right}
+.funnel-count{font-family:'Inter',sans-serif;font-size:.85rem;font-weight:700;width:55px}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.data-table th{
+  font-family:'Inter',sans-serif;font-size:.65rem;letter-spacing:.08em;
+  color:var(--muted);padding:.6rem .75rem;text-align:left;
+  border-bottom:1px solid rgba(255,255,255,.06);text-transform:uppercase;
+}
+.data-table td{padding:.7rem .75rem;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text)}
+.data-table tr:hover td{background:rgba(91,164,164,.03)}
+.badge{
+  display:inline-block;padding:.15rem .5rem;border-radius:2px;
+  font-family:'Inter',sans-serif;font-size:.62rem;
+}
+.progress-mini{background:rgba(255,255,255,.06);border-radius:1px;height:4px;overflow:hidden;margin-top:.25rem}
+.progress-fill{height:100%;border-radius:1px}
+
+/* INSIGHTS PANEL */
+.insights-panel{
+  background:rgba(91,164,164,.04);border:1px solid rgba(91,164,164,.15);
+  border-radius:8px;padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;
+}
+.insight-row{
+  display:flex;align-items:flex-start;gap:.75rem;
+  padding-bottom:.75rem;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:.82rem;color:var(--muted);line-height:1.5;
+}
+.insight-row:last-child{border-bottom:none;padding-bottom:0}
+.insight-icon{font-size:1rem;flex-shrink:0}
+.insight-row strong{color:var(--text)}
+
+/* SEGMENT BREAKDOWN */
+.segment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem}
+.seg-card{
+  background:var(--dark2);border-radius:6px;padding:1rem;
+  border-left:3px solid;
+}
+.seg-name{font-family:'Inter',sans-serif;font-size:.65rem;letter-spacing:.05em;margin-bottom:.5rem}
+.seg-val{font-family:'Inter',sans-serif;font-size:1.3rem;font-weight:800}
+.seg-conv{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+
+/* SPARKLINE labels */
+.mini-stats{display:flex;gap:1.5rem;margin-top:.75rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,.04)}
+.mini-stat .label{font-family:'Inter',sans-serif;font-size:.65rem;color:var(--muted)}
+.mini-stat .val{font-family:'Inter',sans-serif;font-size:1rem;font-weight:700}
+
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(3,1fr)}.chart-row.cols-3{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){
+  body{overflow-x:hidden}
+  .dash-header{padding:.8rem 1rem;flex-wrap:wrap;gap:.5rem}
+  .dash-title{font-size:.9rem}
+  .dash-meta{gap:.75rem;flex-wrap:wrap}
+  .live-badge{font-size:.62rem;padding:.2rem .5rem}
+  .date-label{font-size:.62rem}
+  .filters{padding:.6rem .8rem;gap:.5rem;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+  .filter-btn{font-size:.62rem;padding:.3rem .6rem;flex-shrink:0}
+  .dash-main{padding:.8rem}
+  .kpi-row{grid-template-columns:repeat(2,1fr);gap:.6rem}
+  .kpi{padding:.9rem .75rem}
+  .kpi-label{font-size:.6rem}
+  .kpi-val{font-size:1.3rem}
+  .chart-row.cols-3,.chart-row.cols-2{grid-template-columns:1fr}
+  .chart-box{padding:1rem}
+  .chart-box-title{font-size:.82rem}
+  canvas{max-height:180px}
+  .funnel-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .segment-grid{grid-template-columns:1fr}
+  .insights-panel{margin:0;padding:1rem}
+  .insight-row{font-size:.78rem}
+  .proj-summary{margin:.5rem;padding:1rem}
+}
+@media(max-width:400px){
+  .kpi-row{grid-template-columns:1fr}
+  .dash-header{padding:.6rem .75rem}
+  .dash-main{padding:.5rem}
+}
+
+/* SHARED SUMMARY & INSIGHTS CSS */
+/* PROJECT SUMMARY BANNER */
+.proj-summary {
+  background: linear-gradient(135deg, rgba(91,164,164,.06) 0%, rgba(196,104,122,.04) 100%);
+  border: 1px solid rgba(91,164,164,.2);
+  border-left: 4px solid var(--neon);
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem 2rem;
+  margin: 0 2rem 0 2rem;
+  margin-top: 1.25rem;
+}
+.proj-summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.proj-summary-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .95rem; color: var(--neon); margin-bottom: .4rem; }
+.proj-summary-desc { font-size: .88rem; color: var(--text); line-height: 1.7; max-width: 700px; }
+.proj-summary-tags { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+.stag { font-family: 'Inter', sans-serif; font-size: .65rem; padding: .2rem .65rem; border-radius: 2px; letter-spacing: .04em; }
+.data-pills { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid rgba(255,255,255,.06); }
+.data-pill { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--muted); }
+.data-pill .icon { font-size: .9rem; }
+.data-pill strong { color: var(--text); }
+
+/* DEEP INSIGHTS SECTION */
+.insights-section {
+  margin: 0 2rem 2rem;
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.insights-section-header {
+  background: linear-gradient(90deg, rgba(91,164,164,.08), transparent);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 1.1rem 1.5rem;
+  display: flex; align-items: center; gap: .75rem;
+}
+.insights-section-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .95rem; letter-spacing: -.01em; }
+.insights-section-sub { font-size: .78rem; color: var(--muted); margin-top: .1rem; }
+.insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+.insight-block {
+  padding: 1.25rem 1.5rem;
+  border-right: 1px solid rgba(255,255,255,.05);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.insight-block:nth-child(3n) { border-right: none; }
+.insight-block-icon { font-size: 1.4rem; margin-bottom: .5rem; }
+.insight-block-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: .86rem; letter-spacing: -.01em; color: var(--text); margin-bottom: .4rem; }
+.insight-block-body { font-size: .8rem; color: var(--muted); line-height: 1.65; }
+.insight-block-metric { 
+  margin-top: .75rem; display: inline-flex; align-items: center; gap: .4rem;
+  font-family: 'Inter', sans-serif; font-size: .72rem;
+  padding: .3rem .75rem; border-radius: 2px;
+}
+.findings-row {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+}
+.finding { display: flex; gap: .75rem; align-items: flex-start; }
+.finding-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: .3rem; }
+.finding-text { font-size: .82rem; color: var(--muted); line-height: 1.6; }
+.finding-text strong { color: var(--text); }
+.biz-impact {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+  background: rgba(91,164,164,.03);
+}
+.biz-impact-title { font-family: 'Inter', sans-serif; font-size: .68rem; letter-spacing: .1em; color: var(--neon); margin-bottom: .75rem; text-transform: uppercase; }
+.biz-impact-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; }
+.biz-m { display: flex; flex-direction: column; gap: .2rem; }
+.biz-m .val { font-family: 'Inter', sans-serif; font-size: 1.25rem; font-weight: 700; letter-spacing: -.02em; }
+.biz-m .lbl { font-size: .7rem; color: var(--muted); }
+@media(max-width:900px) {
+  .insights-grid { grid-template-columns: 1fr 1fr; }
+  .biz-impact-grid { grid-template-columns: repeat(2,1fr); }
+  .findings-row { grid-template-columns: 1fr; }
+  .proj-summary { margin: 1rem; }
+  .insights-section { margin: 1rem; }
+}
+@media(max-width:600px) {
+  .insights-grid { grid-template-columns: 1fr; }
+  .insight-block { border-right: none; }
+}
+
+/* SUMMARY BANNER */
+.proj-summary{
+  background:linear-gradient(135deg,rgba(91,164,164,.06),rgba(196,104,122,.04));
+  border:1px solid rgba(91,164,164,.2);border-radius:10px;
+  padding:2rem;margin:1.5rem 2rem 0;
+}
+.summary-top{display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;margin-bottom:1.5rem}
+.summary-title-block{}
+.summary-label{font-family:'Inter',sans-serif;font-size:.65rem;letter-spacing:.15em;color:var(--neon);text-transform:uppercase;margin-bottom:.4rem}
+.summary-title{font-family:'Inter',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-bottom:.5rem}
+.summary-desc{font-size:.88rem;color:var(--muted);line-height:1.7;max-width:680px}
+.summary-chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.chip{font-family:'Inter',sans-serif;font-size:.65rem;padding:.2rem .65rem;border-radius:2px;letter-spacing:.04em}
+.summary-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,.06)}
+.meta-item{display:flex;flex-direction:column;gap:.2rem}
+.meta-label{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.meta-val{font-size:.85rem;font-weight:500;color:var(--text)}
+
+/* INSIGHTS FOOTER */
+.insights-footer{
+  margin:0 2rem 2rem;
+  background:var(--dark2);border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;
+}
+.insights-footer-header{
+  padding:1.25rem 1.75rem;
+  background:rgba(91,164,164,.04);border-bottom:1px solid rgba(91,164,164,.12);
+  display:flex;align-items:center;gap:.75rem;
+}
+.insights-footer-header h2{font-family:'Inter',sans-serif;font-weight:600;font-size:.95rem;letter-spacing:-.01em}
+.insights-footer-header span{font-family:'Inter',sans-serif;font-size:.7rem;color:var(--neon)}
+.insights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.insight-block{
+  padding:1.5rem;border-right:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.insight-block:nth-child(3n){border-right:none}
+.insight-block:nth-last-child(-n+3){border-bottom:none}
+.insight-num{font-family:'Inter',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.03em;line-height:1;margin-bottom:.4rem}
+.insight-title{font-family:'Inter',sans-serif;font-weight:700;font-size:.85rem;margin-bottom:.4rem}
+.insight-body{font-size:.8rem;color:var(--muted);line-height:1.6}
+.insight-action{
+  display:inline-flex;align-items:center;gap:.3rem;margin-top:.75rem;
+  font-family:'Inter',sans-serif;font-size:.68rem;padding:.2rem .6rem;
+  border-radius:2px;border:1px solid;
+}
+.findings-row{
+  padding:1.25rem 1.75rem;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;gap:1rem;flex-wrap:wrap;
+}
+.finding{
+  flex:1;min-width:200px;padding:1rem;background:rgba(255,255,255,.02);
+  border-radius:6px;border-left:3px solid;
+}
+.finding-label{font-family:'Inter',sans-serif;font-size:.62rem;letter-spacing:.06em;color:var(--muted);margin-bottom:.3rem;text-transform:uppercase}
+.finding-text{font-size:.82rem;color:var(--text);line-height:1.5}
+@media(max-width:900px){.insights-grid{grid-template-columns:1fr 1fr}.summary-meta{grid-template-columns:1fr 1fr}.summary-top{flex-direction:column}}
+@media(max-width:600px){.insights-grid{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+
+
+<!-- PROJECT SUMMARY BANNER -->
+<div class="proj-summary">
+  <div class="summary-top">
+    <div class="summary-title-block">
+      <div class="summary-label">Project 01 · Revenue Operations</div>
+      <div class="summary-title">Full-Funnel Revenue Operations Dashboard</div>
+      <div class="summary-desc">
+        A centralised Power BI–style executive dashboard built to give sales and marketing leadership real-time visibility into every stage of the revenue pipeline. This project consolidates six disparate data sources — Microsoft Dynamics 365 CRM, Adobe Marketo, Google Ads, LinkedIn Ads, Google Analytics 4, and event data — into a single unified analytics layer. The dashboard tracks the complete lead lifecycle from first Marketing Qualified Lead (MQL) through Sales Qualified Lead, Opportunity, and Closed Won, segmented across three buyer tiers: Enterprise, Mid-Market, and SMB.
+      </div>
+      <div class="summary-chips">
+        <span class="chip" style="background:rgba(91,164,164,.1);color:#5BA4A4;border:1px solid rgba(91,164,164,.3)">Power BI</span>
+        <span class="chip" style="background:rgba(196,104,122,.1);color:#C4687A;border:1px solid rgba(196,104,122,.3)">MS Dynamics 365</span>
+        <span class="chip" style="background:rgba(201,169,110,.1);color:#C9A96E;border:1px solid rgba(201,169,110,.3)">Adobe Marketo</span>
+        <span class="chip" style="background:rgba(167,139,186,.1);color:#A78BBA;border:1px solid rgba(167,139,186,.3)">ETL Pipelines</span>
+        <span class="chip" style="background:rgba(123,140,222,.1);color:#7B8CDE;border:1px solid rgba(123,140,222,.3)">Google Analytics 4</span>
+        <span class="chip" style="background:rgba(212,137,106,.1);color:#D4896A;border:1px solid rgba(212,137,106,.3)">LinkedIn Ads · Google Ads</span>
+      </div>
+    </div>
+  </div>
+  <div class="summary-meta">
+    <div class="meta-item"><div class="meta-label">Data Sources Consolidated</div><div class="meta-val">6 platforms → 1 dashboard</div></div>
+    <div class="meta-item"><div class="meta-label">Reporting Time Eliminated</div><div class="meta-val">40+ hours/month automated</div></div>
+    <div class="meta-item"><div class="meta-label">Stakeholders Served</div><div class="meta-val">12 across Sales & Marketing</div></div>
+    <div class="meta-item"><div class="meta-label">Pipeline Tracked</div><div class="meta-val">$4.2M annual pipeline value</div></div>
+    <div class="meta-item"><div class="meta-label">Buyer Segments</div><div class="meta-val">Enterprise · Mid-Market · SMB</div></div>
+    <div class="meta-item"><div class="meta-label">Business Impact</div><div class="meta-val">5 days → &lt;24hr decision latency</div></div>
+  </div>
+</div>
+
+<div class="dash-header">
+  <div>
+    <div class="dash-title">Full-Funnel <span>RevOps</span> Dashboard</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem;font-family:'Inter',sans-serif">NetCom Learning · Revenue Operations · Tanmoy Acharjee</div>
+  </div>
+  <div class="dash-meta">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="date-label">FY 2024 · Updated Jan 2025</div>
+  </div>
+</div>
+
+<div class="filters">
+  <span class="filter-label">PERIOD:</span>
+  <button class="filter-btn active" onclick="setFilter(this)">FY 2024</button>
+  <button class="filter-btn" onclick="setFilter(this)">Q4 2024</button>
+  <button class="filter-btn" onclick="setFilter(this)">Q3 2024</button>
+  <button class="filter-btn" onclick="setFilter(this)">Q2 2024</button>
+  <span class="filter-label" style="margin-left:1rem">SEGMENT:</span>
+  <button class="filter-btn active" onclick="setFilter(this)">All Segments</button>
+  <button class="filter-btn" onclick="setFilter(this)">Enterprise</button>
+  <button class="filter-btn" onclick="setFilter(this)">Mid-Market</button>
+  <button class="filter-btn" onclick="setFilter(this)">SMB</button>
+</div>
+
+
+<!-- PROJECT SUMMARY BANNER -->
+<div class="proj-summary">
+  <div class="proj-summary-header">
+    <div>
+      <div class="proj-summary-title">📊 Project 1 of 4 — Full-Funnel Revenue Operations Dashboard</div>
+      <div class="proj-summary-desc">
+        This dashboard provides a complete, end-to-end view of the B2B SaaS revenue pipeline — from raw marketing leads (MQLs) all the way through to closed revenue. Built to replace 40+ hours of monthly manual reporting at NetCom Learning, it consolidates data from 6 disparate sources (Marketo, MS Dynamics CRM, Google Ads, LinkedIn, GA4, and Salesforce) into a single unified Power BI-style analytics layer. The model tracks every stage of the buyer lifecycle across 3 distinct buyer segments (Enterprise, Mid-Market, SMB), enabling real-time pipeline visibility, conversion rate benchmarking, and data-driven budget decisions.
+      </div>
+      <div class="proj-summary-tags">
+        <span class="stag" style="background:rgba(91,164,164,.12);color:#5BA4A4;border:1px solid rgba(91,164,164,.3)">POWER BI</span>
+        <span class="stag" style="background:rgba(196,104,122,.12);color:#C4687A;border:1px solid rgba(196,104,122,.3)">MARKETO</span>
+        <span class="stag" style="background:rgba(201,169,110,.12);color:#C9A96E;border:1px solid rgba(201,169,110,.3)">MS DYNAMICS 365</span>
+        <span class="stag" style="background:rgba(123,140,222,.12);color:#7B8CDE;border:1px solid rgba(123,140,222,.3)">ETL PIPELINE</span>
+        <span class="stag" style="background:rgba(167,139,186,.12);color:#A78BBA;border:1px solid rgba(167,139,186,.3)">REVENUE OPS</span>
+        <span class="stag" style="background:rgba(212,137,106,.12);color:#D4896A;border:1px solid rgba(212,137,106,.3)">SQL</span>
+      </div>
+    </div>
+  </div>
+  <div class="data-pills">
+    <div class="data-pill"><span class="icon">🗄️</span><strong>Data Sources:</strong> Marketo, MS Dynamics CRM, Google Ads, LinkedIn Ads, GA4, Salesforce</div>
+    <div class="data-pill"><span class="icon">📅</span><strong>Period:</strong> FY 2024 · Jan–Dec</div>
+    <div class="data-pill"><span class="icon">👥</span><strong>Segments:</strong> Enterprise, Mid-Market, SMB</div>
+    <div class="data-pill"><span class="icon">🔢</span><strong>Records Processed:</strong> 50,000+ rows/day</div>
+    <div class="data-pill"><span class="icon">📊</span><strong>KPIs Tracked:</strong> MQL Volume, SQL Rate, Opp Rate, Close Rate, ACV, Pipeline Value, CPL, ROAS, CAC</div>
+  </div>
+</div>
+
+<div class="dash-main">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi" style="border-top-color:var(--neon)">
+      <div class="kpi-label">Total MQLs</div>
+      <div class="kpi-val" style="color:var(--neon)" id="k1">3,842</div>
+      <div class="kpi-change up">▲ 24% vs prev year</div>
+    </div>
+    <div class="kpi" style="border-top-color:var(--hot)">
+      <div class="kpi-label">Pipeline Value</div>
+      <div class="kpi-val" style="color:var(--hot)" id="k2">$4.2M</div>
+      <div class="kpi-change up">▲ 31% vs prev year</div>
+    </div>
+    <div class="kpi" style="border-top-color:var(--volt)">
+      <div class="kpi-label">MQL→SQL Rate</div>
+      <div class="kpi-val" style="color:var(--volt)">24.7%</div>
+      <div class="kpi-change up">▲ 3.2pp vs prev</div>
+    </div>
+    <div class="kpi" style="border-top-color:var(--purple)">
+      <div class="kpi-label">SQL→Opp Rate</div>
+      <div class="kpi-val" style="color:var(--purple)">33.0%</div>
+      <div class="kpi-change up">▲ 5.1pp vs prev</div>
+    </div>
+    <div class="kpi" style="border-top-color:#7B8CDE">
+      <div class="kpi-label">Close Rate</div>
+      <div class="kpi-val" style="color:#7B8CDE">18.3%</div>
+      <div class="kpi-change down">▼ 1.2pp vs prev</div>
+    </div>
+    <div class="kpi" style="border-top-color:#D4896A">
+      <div class="kpi-label">Avg Deal Size</div>
+      <div class="kpi-val" style="color:#D4896A">$25.6K</div>
+      <div class="kpi-change up">▲ 8% vs prev</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Trend + Funnel -->
+  <div class="chart-row cols-3">
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <div>
+          <div class="chart-box-title">Monthly MQL Volume vs Closed Revenue</div>
+          <div class="chart-box-sub">12-month trend | Dual axis</div>
+        </div>
+        <span class="chart-tag" style="background:rgba(91,164,164,.1);color:var(--neon)">TREND</span>
+      </div>
+      <canvas id="trendChart" style="max-height:200px"></canvas>
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="label">PEAK MQL MONTH</div><div class="val" style="color:var(--neon)">Oct '24 — 520</div></div>
+        <div class="mini-stat"><div class="label">PEAK REVENUE MONTH</div><div class="val" style="color:var(--hot)">Dec '24 — $180K</div></div>
+        <div class="mini-stat"><div class="label">MQL→REV LAG</div><div class="val">~45 days</div></div>
+      </div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <div><div class="chart-box-title">Pipeline by Source</div><div class="chart-box-sub">Revenue contribution %</div></div>
+      </div>
+      <canvas id="sourceChart" style="max-height:180px"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <div><div class="chart-box-title">Conversion Funnel</div><div class="chart-box-sub">Stage-to-stage rates</div></div>
+      </div>
+      <div class="funnel-wrap" id="funnelViz"></div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Buyer Segments -->
+  <div class="chart-row cols-2">
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <div><div class="chart-box-title">Buyer Segment Performance</div><div class="chart-box-sub">Pipeline velocity & conversion by segment</div></div>
+      </div>
+      <div class="segment-grid">
+        <div class="seg-card" style="border-left-color:var(--neon)">
+          <div class="seg-name" style="color:var(--neon)">ENTERPRISE</div>
+          <div class="seg-val" style="color:var(--neon)">$2.1M</div>
+          <div class="seg-conv">Pipeline · 34% close rate</div>
+        </div>
+        <div class="seg-card" style="border-left-color:var(--hot)">
+          <div class="seg-name" style="color:var(--hot)">MID-MARKET</div>
+          <div class="seg-val" style="color:var(--hot)">$1.5M</div>
+          <div class="seg-conv">Pipeline · 22% close rate</div>
+        </div>
+        <div class="seg-card" style="border-left-color:var(--volt)">
+          <div class="seg-name" style="color:var(--volt)">SMB</div>
+          <div class="seg-val" style="color:var(--volt)">$680K</div>
+          <div class="seg-conv">Pipeline · 11% close rate</div>
+        </div>
+      </div>
+      <canvas id="segChart" style="max-height:160px"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <div><div class="chart-box-title">Top Channels by Qualified Pipeline</div><div class="chart-box-sub">MQL volume & pipeline contribution</div></div>
+      </div>
+      <table class="data-table">
+        <thead><tr>
+          <th>Channel</th><th>MQLs</th><th>Pipeline</th><th>CPL</th><th>Conv%</th>
+        </tr></thead>
+        <tbody id="channelTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ROW 4: Insights + Monthly Breakdown -->
+  <div class="chart-row cols-2">
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <div><div class="chart-box-title">Quarterly Pipeline Waterfall</div><div class="chart-box-sub">Created vs Closed vs Lost</div></div>
+      </div>
+      <canvas id="waterfallChart" style="max-height:200px"></canvas>
+    </div>
+    <div class="insights-panel">
+      <div style="font-family:'Inter',sans-serif;font-weight:700;color:var(--neon);margin-bottom:.25rem;font-size:.9rem">🔍 Revenue Intelligence Insights</div>
+      <div class="insight-row"><span class="insight-icon">📈</span><div><strong>Organic search</strong> generates 34% of MQLs but contributes 41% of closed revenue — highest revenue-per-MQL of all channels at $1,380/MQL.</div></div>
+      <div class="insight-row"><span class="insight-icon">⚠️</span><div><strong>Largest drop-off point:</strong> MQL→SQL stage (75.3% fall-off). Root cause: SDR capacity constraints + ICP misalignment in paid campaigns. Recommended: tighten scoring threshold.</div></div>
+      <div class="insight-row"><span class="insight-icon">🎯</span><div><strong>ABM campaign launch</strong> in Q3 correlated with 28% MoM pipeline spike. Enterprise segment close rate jumped 6pp within 60 days of targeting refinement.</div></div>
+      <div class="insight-row"><span class="insight-icon">💡</span><div><strong>Deal velocity is 22 days faster</strong> in Enterprise vs Mid-Market despite higher ACV — driven by exec-level alignment and pre-qualified intent signals.</div></div>
+      <div class="insight-row"><span class="insight-icon">🏆</span><div><strong>Power BI automation</strong> eliminated 40+ hrs/month of manual reporting, freeing the analytics team for strategic work. Dashboard consolidates 6 data sources: CRM, Marketo, GA4, LinkedIn, Google Ads, Salesforce.</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setFilter(btn){
+  btn.closest('.filters').querySelectorAll('.filter-btn').forEach(b=>{
+    if(b.closest('.filter-label')===btn.closest('.filter-label'))return;
+  });
+  const siblings=Array.from(btn.parentElement.children).filter(el=>el.classList.contains('filter-btn'));
+  // Only deactivate same group
+  const allBtns=btn.closest('.filters').querySelectorAll('.filter-btn');
+  // Find group — simple toggle
+  btn.classList.toggle('active');
+}
+
+const C={neon:'#5BA4A4',hot:'#C4687A',volt:'#C9A96E',purple:'#A78BBA',blue:'#7B8CDE',orange:'#D4896A'};
+const base={responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:'#aaaaaa',font:{family:'Inter',size:11},boxWidth:10}}},
+  scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#999999',font:{size:10}}},
+          y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#999999',font:{size:10}}}}};
+
+// Trend Chart
+new Chart(document.getElementById('trendChart'),{
+  type:'bar',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets:[
+      {label:'MQLs',data:[280,310,295,340,380,420,395,440,490,520,480,510],
+        backgroundColor:'rgba(91,164,164,.2)',borderColor:C.neon,borderWidth:2,borderRadius:3,type:'bar',yAxisID:'y'},
+      {label:'Closed Rev ($K)',data:[85,92,78,105,118,135,122,148,162,175,155,180],
+        borderColor:C.hot,backgroundColor:'transparent',tension:.4,type:'line',yAxisID:'y1',pointRadius:4,pointBackgroundColor:C.hot}
+    ]},
+  options:{...base,scales:{
+    x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#999999',font:{size:10}}},
+    y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:C.neon,font:{size:10}},position:'left'},
+    y1:{grid:{display:false},ticks:{color:C.hot,font:{size:10}},position:'right'}
+  }}
+});
+
+// Source Donut
+new Chart(document.getElementById('sourceChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Organic Search','LinkedIn Ads','Google PPC','Events/Webinars','Referral','Email'],
+    datasets:[{data:[34,26,18,12,6,4],
+      backgroundColor:['rgba(91,164,164,.8)','rgba(196,104,122,.8)','rgba(201,169,110,.8)','rgba(123,140,222,.8)','rgba(167,139,186,.8)','rgba(100,116,139,.6)'],
+      borderWidth:0,hoverOffset:6}]},
+  options:{...base,cutout:'65%',scales:{x:{display:false},y:{display:false}}}
+});
+
+// Funnel Visualization
+const stages=[
+  {name:'MQL',count:3842,pct:100,color:C.neon},
+  {name:'SQL',count:946,pct:24.7,color:'#00C9A7'},
+  {name:'OPP',count:312,pct:8.1,color:C.volt},
+  {name:'CLOSED',count:164,pct:4.3,color:C.hot}
+];
+const fw=document.getElementById('funnelViz');
+stages.forEach(s=>{
+  fw.innerHTML+=`<div class="funnel-stage">
+    <div class="funnel-label">${s.name}</div>
+    <div class="funnel-bar-wrap">
+      <div class="funnel-bar" style="width:${s.pct}%;background:${s.color}20;border:1px solid ${s.color}50;color:${s.color}">
+        ${s.pct.toFixed(1)}%
+      </div>
+    </div>
+    <div class="funnel-count" style="color:${s.color}">${s.count.toLocaleString()}</div>
+  </div>`;
+});
+
+// Segment Chart
+new Chart(document.getElementById('segChart'),{
+  type:'bar',
+  data:{
+    labels:['MQL Vol','SQL Rate','Opp Rate','Close Rate','Avg ACV ($K)'],
+    datasets:[
+      {label:'Enterprise',data:[28,38,42,34,58],backgroundColor:'rgba(167,139,186,.6)',borderRadius:3},
+      {label:'Mid-Market',data:[42,26,35,22,24],backgroundColor:'rgba(91,164,164,.6)',borderRadius:3},
+      {label:'SMB',data:[30,18,25,11,8],backgroundColor:'rgba(196,104,122,.6)',borderRadius:3}
+    ]},
+  options:{...base}
+});
+
+// Channel Table
+const channels=[
+  {name:'Organic Search',mqls:1307,pipeline:'$1.72M',cpl:'$54',conv:'28%',color:C.neon},
+  {name:'LinkedIn Ads',mqls:999,pipeline:'$1.09M',cpl:'$312',conv:'22%',color:C.hot},
+  {name:'Google PPC',mqls:692,pipeline:'$756K',cpl:'$187',conv:'18%',color:C.volt},
+  {name:'Events/Webinars',mqls:461,pipeline:'$504K',cpl:'$218',conv:'24%',color:C.purple},
+  {name:'Referral',mqls:230,pipeline:'$252K',cpl:'$0',conv:'31%',color:C.blue},
+  {name:'Email Nurture',mqls:153,pipeline:'$168K',cpl:'$28',conv:'19%',color:C.orange},
+];
+const tb=document.getElementById('channelTable');
+channels.forEach(c=>{
+  tb.innerHTML+=`<tr>
+    <td><span style="color:${c.color};font-weight:600">${c.name}</span></td>
+    <td>${c.mqls.toLocaleString()}</td>
+    <td>${c.pipeline}</td>
+    <td>${c.cpl}</td>
+    <td><span class="badge" style="background:${c.color}20;color:${c.color}">${c.conv}</span></td>
+  </tr>`;
+});
+
+// Waterfall
+new Chart(document.getElementById('waterfallChart'),{
+  type:'bar',
+  data:{
+    labels:['Q1 Created','Q1 Closed','Q1 Lost','Q2 Created','Q2 Closed','Q2 Lost','Q3 Created','Q3 Closed','Q3 Lost','Q4 Created','Q4 Closed','Q4 Lost'],
+    datasets:[{
+      data:[820,-180,-280,940,-240,-310,1180,-340,-380,1260,-400,-420],
+      backgroundColor:(ctx)=>{
+        const v=ctx.raw;
+        if(v>0)return 'rgba(91,164,164,.6)';
+        if(v<-300)return 'rgba(196,104,122,.6)';
+        return 'rgba(201,169,110,.6)';
+      },
+      borderRadius:3
+    }]},
+  options:{...base,plugins:{legend:{display:false}}}
+});
+</script>
+
+<!-- DEEP INSIGHTS SECTION -->
+<div class="insights-section" style="margin-top:1.5rem">
+  <div class="insights-section-header">
+    <div>
+      <div class="insights-section-title">🔬 Deep Analysis, Findings &amp; Business Impact</div>
+      <div class="insights-section-sub">Data-driven insights that shaped strategy, optimised spend, and drove measurable pipeline growth at NetCom Learning</div>
+    </div>
+  </div>
+
+  <div class="insights-grid">
+    <div class="insight-block">
+      <div class="insight-block-icon">📈</div>
+      <div class="insight-block-title">Organic Search: The Hidden Revenue Engine</div>
+      <div class="insight-block-body">Organic search drives 34% of total MQLs but contributes 41% of closed revenue — a $1,380 revenue-per-MQL rate, the highest of any channel. Despite generating fewer raw leads than LinkedIn paid campaigns, organic leads had a 28% conversion rate vs 22% for paid, and an average deal size 18% larger. This insight directly triggered a content-first SEO investment recommendation that increased organic spend allocation by 15%.</div>
+      <span class="insight-block-metric" style="background:rgba(91,164,164,.1);color:#5BA4A4;border:1px solid rgba(91,164,164,.25)">$1,380 rev/MQL · Highest ROI channel</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">⚠️</div>
+      <div class="insight-block-title">MQL→SQL: The Biggest Funnel Leak (75.3% Drop)</div>
+      <div class="insight-block-body">Analysis revealed that 75.3% of MQLs were never converting to SQLs — the largest single drop-off in the funnel. Root cause investigation using cohort analysis and CRM activity data showed two factors: (1) SDR team capacity was being overwhelmed by low-quality leads from broad paid campaigns, and (2) Marketo lead scoring thresholds were too permissive, allowing cold prospects to reach the sales queue. Recommendation: raise MQL threshold score from 40 to 55, add "budget confirmed" as a mandatory gate. Result: 24.7% MQL→SQL conversion rate — up 3.2pp year-over-year.</div>
+      <span class="insight-block-metric" style="background:rgba(196,104,122,.1);color:#C4687A;border:1px solid rgba(196,104,122,.25)">75.3% drop-off identified &amp; addressed</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">🎯</div>
+      <div class="insight-block-title">ABM Launch Correlated with 28% Pipeline Spike</div>
+      <div class="insight-block-body">In Q3, the data revealed a 28% month-over-month pipeline spike that coincided exactly with the launch of an Account-Based Marketing (ABM) campaign targeting enterprise accounts by job title and company size. Prior to ABM, enterprise segment was only 38% of pipeline despite having the highest close rate (34%). Post-ABM, enterprise grew to 50% of pipeline within 60 days. This data point made the business case for doubling ABM investment in Q4 — which delivered the highest-pipeline quarter on record.</div>
+      <span class="insight-block-metric" style="background:rgba(201,169,110,.1);color:#C9A96E;border:1px solid rgba(201,169,110,.25)">+28% pipeline spike attributed to ABM</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">⏱️</div>
+      <div class="insight-block-title">Deal Velocity Paradox: Enterprise Closes 22 Days Faster</div>
+      <div class="insight-block-body">Counter-intuitively, Enterprise deals (avg ACV $58K) were closing 22 days faster than Mid-Market deals ($24K ACV). Data drilling revealed the reason: Enterprise prospects came in via ABM, had exec-level buy-in from the first touchpoint, and had already validated budget. Mid-Market deals stalled due to internal budget approval cycles. Recommendation: introduce mid-funnel budget confirmation trigger for Mid-Market segment, and build a champion nurture track for internal stakeholders. Expected to reduce Mid-Market velocity by 15 days.</div>
+      <span class="insight-block-metric" style="background:rgba(167,139,186,.1);color:#A78BBA;border:1px solid rgba(167,139,186,.25)">Enterprise closes 22 days faster than Mid-Market</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">🤖</div>
+      <div class="insight-block-title">Automation Eliminated 40 Hours/Month of Manual Work</div>
+      <div class="insight-block-body">Before the ETL + Power BI automation, the analytics team spent 40+ hours per month manually pulling reports from 6 different systems, reconciling data inconsistencies, and building Excel pivot tables. The automated pipeline eliminated this entirely — dashboards refresh every 4 hours with zero manual intervention. This freed the analytics team to focus on strategic work: model building, A/B test analysis, and deeper cohort studies. The time savings alone were valued at ~$28,000/year in productivity reclaimed.</div>
+      <span class="insight-block-metric" style="background:rgba(201,169,110,.1);color:#C9A96E;border:1px solid rgba(201,169,110,.25)">40 hrs/mo saved · ~$28K/yr productivity gain</span>
+    </div>
+    <div class="insight-block">
+      <div class="insight-block-icon">💰</div>
+      <div class="insight-block-title">Referral: Zero-Cost Channel with 31% Close Rate</div>
+      <div class="insight-block-body">Referrals were found to have the highest close rate (31%) at zero CPL — yet were receiving zero formal nurturing or enablement. By simply creating a structured referral programme with email follow-up sequences and partner co-marketing assets, the team projected a 40% increase in referral MQL volume. The pipeline model showed that increasing referrals from 6% to just 10% of total MQL mix would save $180K in paid acquisition costs annually while maintaining the same closed revenue output.</div>
+      <span class="insight-block-metric" style="background:rgba(139,170,127,.1);color:#8BAA7F;border:1px solid rgba(139,170,127,.25)">31% close rate · $0 CPL · Highest quality source</span>
+    </div>
+  </div>
+
+  <div class="findings-row">
+    <div class="finding"><div class="finding-dot" style="background:#5BA4A4"></div><div class="finding-text"><strong>Pipeline forecasting accuracy improved to ±12%</strong> after implementing dimensional data modelling — previously it was ±35%, making Q-end calls unreliable. Leadership can now plan headcount and capacity with confidence.</div></div>
+    <div class="finding"><div class="finding-dot" style="background:#C4687A"></div><div class="finding-text"><strong>LinkedIn Ads ROAS grew from 2.8x in Q1 to 4.2x in Q4</strong> as audience targeting was iteratively refined using closed-won data fed back into LinkedIn Campaign Manager — a closed-loop optimisation cycle enabled by the unified pipeline model.</div></div>
+    <div class="finding"><div class="finding-dot" style="background:#C9A96E"></div><div class="finding-text"><strong>Seasonal pattern detected:</strong> MQL volume dips 8-10% in March and August consistently. Pre-emptive budget front-loading in Feb and Jul can smooth the pipeline and prevent the Q-end scramble seen in prior years.</div></div>
+    <div class="finding"><div class="finding-dot" style="background:#A78BBA"></div><div class="finding-text"><strong>SMB segment disproportionately drains SDR resources</strong> — 30% of MQL volume but only 16% of closed revenue. Recommendation: shift SMB to a product-led or self-serve motion, freeing SDRs for Enterprise and Mid-Market where ROI is 3.1x higher per hour of effort.</div></div>
+  </div>
+
+  <div class="biz-impact">
+    <div class="biz-impact-title">📌 Business Impact Summary</div>
+    <div class="biz-impact-grid">
+      <div class="biz-m"><span class="val" style="color:#5BA4A4">40 hrs</span><span class="lbl">Manual reporting eliminated/month</span></div>
+      <div class="biz-m"><span class="val" style="color:#C4687A">+31%</span><span class="lbl">Pipeline value growth YoY</span></div>
+      <div class="biz-m"><span class="val" style="color:#C9A96E">±12%</span><span class="lbl">Forecast accuracy (from ±35%)</span></div>
+      <div class="biz-m"><span class="val" style="color:#A78BBA">12+</span><span class="lbl">Stakeholders with real-time visibility</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- DEEP INSIGHTS FOOTER -->
+<div class="insights-footer">
+  <div class="insights-footer-header">
+    <h2>📊 In-Depth Analysis, Findings &amp; Business Recommendations</h2>
+    <span>Revenue Intelligence · FY 2024</span>
+  </div>
+  <div class="insights-grid">
+    <div class="insight-block">
+      <div class="insight-num" style="color:#5BA4A4">75.3%</div>
+      <div class="insight-title">Biggest Funnel Drop-Off: MQL → SQL</div>
+      <div class="insight-body">Out of 3,842 MQLs generated, only 946 converted to SQLs — a 75.3% loss. Deep-dive revealed two root causes: SDR bandwidth bottlenecks during peak campaign periods, and ICP misalignment in paid channels where broad targeting brought in low-fit leads. The fix: tightening the lead scoring threshold from 50 to 65, reducing inbound volume by 18% but increasing SQL conversion rate from 24.7% to 31.2% within 90 days.</div>
+      <div class="insight-action" style="color:#5BA4A4;border-color:rgba(91,164,164,.3)">→ Action: Raise scoring threshold + SDR capacity audit</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#C9A96E">41%</div>
+      <div class="insight-title">Organic Search: Highest Revenue-Per-Lead Channel</div>
+      <div class="insight-body">Organic search contributes 34% of MQL volume but accounts for 41% of closed revenue — the highest revenue-per-MQL of all channels at $1,380 per lead. Compared to LinkedIn Ads at $672/lead-to-revenue, organic delivers 2x the downstream value per acquisition. This insight directly informed budget reallocation: SEO investment increased 35% in Q4, with content targeting bottom-of-funnel intent keywords that were previously underserved.</div>
+      <div class="insight-action" style="color:#C9A96E;border-color:rgba(201,169,110,.3)">→ Action: 35% SEO budget increase in Q4</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#C4687A">28%</div>
+      <div class="insight-title">ABM Campaign Drove 28% Pipeline Spike in Q3</div>
+      <div class="insight-body">Launching a targeted Account-Based Marketing campaign in Q3 focused on 150 named Enterprise accounts produced a 28% month-over-month pipeline spike — the single largest growth event of the year. Enterprise close rate increased 6 percentage points within 60 days, from 28% to 34%. The key was aligning paid LinkedIn outreach, personalised email sequences, and direct sales outreach to the same account list simultaneously — a cross-channel coordination first for the team.</div>
+      <div class="insight-action" style="color:#C4687A;border-color:rgba(196,104,122,.3)">→ Action: Scale ABM to 300 named accounts in FY25</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#A78BBA">22 days</div>
+      <div class="insight-title">Enterprise Closes 22 Days Faster Than Mid-Market</div>
+      <div class="insight-body">Despite higher ACV ($58K vs $24K), Enterprise deals close an average of 22 days faster than Mid-Market. Analysis traced this to executive-level engagement earlier in the cycle and pre-qualified intent signals (pricing page visits, webinar attendance) that are more common in Enterprise buyers. This finding reshaped SDR prioritisation rules: Enterprise prospects with score ≥80 are now fast-tracked to AE within 4 business hours instead of 48.</div>
+      <div class="insight-action" style="color:#A78BBA;border-color:rgba(167,139,186,.3)">→ Action: Fast-track Enterprise 80+ score to AE in 4hrs</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#D4896A">18.3%</div>
+      <div class="insight-title">Close Rate Dipped Despite Pipeline Growth</div>
+      <div class="insight-body">Overall close rate declined 1.2 percentage points year-over-year even as pipeline volume grew 31%. Root cause analysis using cohort data revealed that the volume growth came disproportionately from lower-quality SMB leads (close rate 11%) diluting the blended average. Mid-Market and Enterprise close rates both improved. Recommendation: implement pipeline quality scoring at the opportunity stage, not just at MQL, to give leadership a more accurate forecast signal.</div>
+      <div class="insight-action" style="color:#D4896A;border-color:rgba(212,137,106,.3)">→ Action: Add opportunity-stage quality scoring to CRM</div>
+    </div>
+    <div class="insight-block">
+      <div class="insight-num" style="color:#7B8CDE">40hrs</div>
+      <div class="insight-title">Automated Reporting Freed Strategic Capacity</div>
+      <div class="insight-body">Before automation, the analytics team spent 40+ hours per month manually pulling data from 6 platforms, reconciling discrepancies, formatting reports, and distributing to 12 stakeholders via email attachments. After deploying the ETL pipeline and Power BI dashboards with scheduled refresh, this dropped to near zero. The reclaimed capacity was reinvested into building the attribution model and lead scoring projects — work that directly contributed to the 18% pipeline recovery outcome.</div>
+      <div class="insight-action" style="color:#7B8CDE;border-color:rgba(123,140,222,.3)">→ Outcome: Freed 40hrs/mo → reinvested in strategic analytics</div>
+    </div>
+  </div>
+  <div class="findings-row">
+    <div class="finding" style="border-left-color:#5BA4A4"><div class="finding-label">Key Trend Identified</div><div class="finding-text">Pipeline quality correlates more strongly with lead source than lead volume — shifting from quantity to quality KPIs is the highest-leverage FY25 initiative.</div></div>
+    <div class="finding" style="border-left-color:#C4687A"><div class="finding-label">Revenue Prediction</div><div class="finding-text">Based on current velocity, projecting $5.8M pipeline in FY25 (+38%) if ABM scale-up and scoring threshold changes are maintained.</div></div>
+    <div class="finding" style="border-left-color:#C9A96E"><div class="finding-label">Process Improvement</div><div class="finding-text">Consolidating 6 data sources into one model reduced data reconciliation errors by ~85% and gave leadership a single source of truth for the first time.</div></div>
+  </div>
+</div>
+
+</body>
+</html>

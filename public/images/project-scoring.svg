@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-label="Lead scoring and cohort thumbnail">
+  <rect width="960" height="620" rx="34" fill="#08070b"/>
+  <rect x="42" y="42" width="876" height="536" rx="28" fill="#111017" stroke="#393342"/>
+  <text x="80" y="98" fill="#fff" font-family="Arial, sans-serif" font-size="30" font-weight="700">Lead Scoring & Cohort Analysis</text>
+  <text x="80" y="128" fill="#aaa2b1" font-family="Arial, sans-serif" font-size="16">15-signal scoring model with cohort retention analysis</text>
+  <g transform="translate(80 168)" font-family="Arial, sans-serif">
+    <rect width="220" height="360" rx="22" fill="#0d0c12" stroke="#272331"/>
+    <text x="26" y="42" fill="#A78BBA" font-size="15" font-weight="700">High-Priority Queue</text>
+    <g>
+      <rect x="24" y="72" width="172" height="46" rx="10" fill="#17131d"/><text x="44" y="101" fill="#fff" font-size="17" font-weight="700">Score 94</text>
+      <rect x="24" y="134" width="148" height="46" rx="10" fill="#17131d"/><text x="44" y="163" fill="#fff" font-size="17" font-weight="700">Score 88</text>
+      <rect x="24" y="196" width="134" height="46" rx="10" fill="#17131d"/><text x="44" y="225" fill="#fff" font-size="17" font-weight="700">Score 82</text>
+      <rect x="24" y="258" width="112" height="46" rx="10" fill="#17131d"/><text x="44" y="287" fill="#fff" font-size="17" font-weight="700">Score 75</text>
+    </g>
+  </g>
+  <g transform="translate(344 178)">
+    <rect width="500" height="318" rx="22" fill="#0d0c12" stroke="#272331"/>
+    <text x="28" y="42" fill="#cfc8d6" font-family="Arial, sans-serif" font-size="16" font-weight="700">Cohort Conversion Heatmap</text>
+    <g transform="translate(30 72)">
+      <rect width="72" height="48" rx="8" fill="#231724"/><rect x="84" width="72" height="48" rx="8" fill="#2f2242"/><rect x="168" width="72" height="48" rx="8" fill="#4c3372"/><rect x="252" width="72" height="48" rx="8" fill="#6b49a2"/><rect x="336" width="72" height="48" rx="8" fill="#8e66d6"/>
+      <rect y="62" width="72" height="48" rx="8" fill="#20151d"/><rect x="84" y="62" width="72" height="48" rx="8" fill="#2b2234"/><rect x="168" y="62" width="72" height="48" rx="8" fill="#3c3154"/><rect x="252" y="62" width="72" height="48" rx="8" fill="#5b4088"/><rect x="336" y="62" width="72" height="48" rx="8" fill="#7d5cbd"/>
+      <rect y="124" width="72" height="48" rx="8" fill="#1b161a"/><rect x="84" y="124" width="72" height="48" rx="8" fill="#242032"/><rect x="168" y="124" width="72" height="48" rx="8" fill="#302a45"/><rect x="252" y="124" width="72" height="48" rx="8" fill="#493a6c"/><rect x="336" y="124" width="72" height="48" rx="8" fill="#6d52a6"/>
+    </g>
+    <text x="30" y="278" fill="#5BA4A4" font-family="Arial, sans-serif" font-size="28" font-weight="700">34.2%</text>
+    <text x="132" y="277" fill="#aaa2b1" font-family="Arial, sans-serif" font-size="16">conversion for score 80+ leads</text>
+  </g>
+</svg>

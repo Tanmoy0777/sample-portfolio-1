@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-label="Campaign automation engine thumbnail">
+  <rect width="960" height="620" rx="34" fill="#07080c"/>
+  <rect x="38" y="38" width="884" height="544" rx="28" fill="#101118" stroke="#353544"/>
+  <text x="76" y="94" fill="#fff" font-family="Arial, sans-serif" font-size="30" font-weight="700">Campaign Performance Engine</text>
+  <text x="76" y="124" fill="#aaa2b1" font-family="Arial, sans-serif" font-size="16">10+ channels, 50K+ rows/day, refreshed every 4 hours</text>
+  <g transform="translate(78 170)">
+    <rect width="180" height="82" rx="16" fill="#1f1a10" stroke="#C9A96E"/>
+    <text x="24" y="33" fill="#C9A96E" font-family="Arial, sans-serif" font-size="14">Blended ROI</text>
+    <text x="24" y="65" fill="#fff" font-family="Arial, sans-serif" font-size="30" font-weight="700">342%</text>
+    <rect x="206" width="180" height="82" rx="16" fill="#121a1b" stroke="#5BA4A4"/>
+    <text x="230" y="33" fill="#5BA4A4" font-family="Arial, sans-serif" font-size="14">Latency</text>
+    <text x="230" y="65" fill="#fff" font-family="Arial, sans-serif" font-size="30" font-weight="700">&lt;24h</text>
+    <rect x="412" width="180" height="82" rx="16" fill="#191420" stroke="#A78BBA"/>
+    <text x="436" y="33" fill="#A78BBA" font-family="Arial, sans-serif" font-size="14">Uptime</text>
+    <text x="436" y="65" fill="#fff" font-family="Arial, sans-serif" font-size="30" font-weight="700">99.8%</text>
+  </g>
+  <g transform="translate(78 306)" stroke-width="4" stroke-linecap="round" fill="none">
+    <path d="M0 80 H160" stroke="#5BA4A4"/>
+    <path d="M160 80 H320" stroke="#C9A96E"/>
+    <path d="M320 80 H480" stroke="#C4687A"/>
+    <path d="M480 80 H640" stroke="#7B8CDE"/>
+    <g fill="#15131a" stroke-width="3">
+      <rect x="0" y="38" width="150" height="84" rx="18" stroke="#5BA4A4"/>
+      <rect x="170" y="38" width="150" height="84" rx="18" stroke="#C9A96E"/>
+      <rect x="340" y="38" width="150" height="84" rx="18" stroke="#C4687A"/>
+      <rect x="510" y="38" width="150" height="84" rx="18" stroke="#7B8CDE"/>
+    </g>
+    <g font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#fff" stroke="none">
+      <text x="37" y="86">INGEST</text>
+      <text x="205" y="86">MODEL</text>
+      <text x="373" y="86">ALERT</text>
+      <text x="548" y="86">REPORT</text>
+    </g>
+  </g>
+</svg>
