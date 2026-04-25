@@ -290,6 +290,55 @@ h2.landing-info-h2 {
   top: 0;
   left: 0;
 }
+@media only screen and (max-width: 480px) {
+  .landing-intro h1 {
+    font-size: 24px;
+    line-height: 26px;
+  }
+  .landing-intro h2 {
+    font-size: 14px;
+    letter-spacing: 1.6px;
+  }
+  .landing-intro p {
+    font-size: 13px;
+    line-height: 18px;
+    width: 100%;
+    max-width: 90vw;
+  }
+  .landing-stats {
+    width: 100%;
+    max-width: 92vw;
+    gap: 6px;
+  }
+  .landing-stat {
+    padding: 8px;
+  }
+  .landing-stat strong {
+    font-size: 16px;
+    line-height: 18px;
+  }
+  .landing-stat span {
+    font-size: 9px;
+    line-height: 11px;
+  }
+  .landing-info {
+    bottom: 28px;
+  }
+  .landing-info h3 {
+    font-size: 16px;
+    letter-spacing: 1.4px;
+  }
+  .landing-info h2 {
+    font-size: 26px;
+    line-height: 30px;
+    letter-spacing: 1.4px;
+    margin-top: -14px;
+    margin-left: 14px;
+  }
+  h2.landing-info-h2 {
+    font-size: 28px;
+  }
+}
 @media screen and (min-width: 500px) {
   .landing-circle2 {
     display: block;

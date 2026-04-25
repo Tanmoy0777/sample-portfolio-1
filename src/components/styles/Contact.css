@@ -90,3 +90,29 @@ a.contact-social {
     width: calc(100% - 25px);
   }
 }
+@media only screen and (max-width: 600px) {
+  .contact-section h3 {
+    font-size: 32px;
+  }
+  .contact-section {
+    padding: 0 16px 70px;
+    margin-top: 30px;
+  }
+  .contact-flex {
+    gap: 28px;
+  }
+  .contact-box h2 {
+    font-size: 17px;
+    line-height: 1.35;
+  }
+  a.contact-social {
+    font-size: 17px;
+  }
+  .contact-flex h4 {
+    font-size: 13px;
+    margin-top: 14px;
+  }
+  .contact-box h5 {
+    font-size: 15px;
+  }
+}

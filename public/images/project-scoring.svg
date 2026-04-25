@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-label="Lead scoring and cohort thumbnail">
   <rect width="960" height="620" rx="34" fill="#08070b"/>
   <rect x="42" y="42" width="876" height="536" rx="28" fill="#111017" stroke="#393342"/>
-  <text x="80" y="98" fill="#fff" font-family="Arial, sans-serif" font-size="30" font-weight="700">Lead Scoring & Cohort Analysis</text>
+  <text x="80" y="98" fill="#fff" font-family="Arial, sans-serif" font-size="30" font-weight="700">Lead Scoring &amp; Cohort Analysis</text>
   <text x="80" y="128" fill="#aaa2b1" font-family="Arial, sans-serif" font-size="16">15-signal scoring model with cohort retention analysis</text>
   <g transform="translate(80 168)" font-family="Arial, sans-serif">
     <rect width="220" height="360" rx="22" fill="#0d0c12" stroke="#272331"/>
