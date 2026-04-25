@@ -14,17 +14,20 @@ import {
 const textureLoader = new THREE.TextureLoader();
 const BASE = import.meta.env.BASE_URL;
 const imageUrls = [
-  `${BASE}images/tools/dynamics365.svg`,
-  `${BASE}images/tools/zoominfo.svg`,
-  `${BASE}images/tools/seamless.svg`,
-  `${BASE}images/tools/excel.svg`,
-  `${BASE}images/tools/powerpoint.svg`,
-  `${BASE}images/tools/microsoft-office.svg`,
-  `${BASE}images/tools/chatgpt.svg`,
-  `${BASE}images/tools/claude.svg`,
-  `${BASE}images/tools/marketo.svg`,
+  `${BASE}images/tools/dynamics365.png`,
+  `${BASE}images/tools/zoominfo.png`,
+  `${BASE}images/tools/seamless-ai.png`,
+  `${BASE}images/tools/excel.png`,
+  `${BASE}images/tools/powerpoint.png`,
+  `${BASE}images/tools/powerbi.webp`,
+  `${BASE}images/tools/marketo.png`,
   `${BASE}images/tools/clickup.svg`,
-  `${BASE}images/tools/notion.svg`,
+  `${BASE}images/tools/notebook-llm.svg`,
+  `${BASE}images/tools/chatgpt.png`,
+  `${BASE}images/tools/claude-code.webp`,
+  `${BASE}images/tools/claude-ai.png`,
+  `${BASE}images/tools/codex.png`,
+  `${BASE}images/tools/gemini.png`,
 ];
 const textures = imageUrls.map((url) => {
   const tex = textureLoader.load(url);
@@ -44,7 +47,7 @@ const coinGeometry = new THREE.CylinderGeometry(
 
 const coins = [...Array(33)].map((_, index) => ({
   scale: [0.85, 1, 0.95, 1, 1.05][Math.floor(Math.random() * 5)],
-  materialIndex: index % 11,
+  materialIndex: index % imageUrls.length,
 }));
 
 type CoinProps = {
