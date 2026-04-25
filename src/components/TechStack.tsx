@@ -14,23 +14,40 @@ import {
 const textureLoader = new THREE.TextureLoader();
 const BASE = import.meta.env.BASE_URL;
 const imageUrls = [
-  `${BASE}images/tools/dynamics365.webp`,
-  `${BASE}images/tools/zoominfo.webp`,
-  `${BASE}images/tools/seamless.webp`,
-  `${BASE}images/tools/excel.webp`,
-  `${BASE}images/tools/powerpoint.webp`,
-  `${BASE}images/tools/microsoft-office.webp`,
+  `${BASE}images/tools/dynamics365.svg`,
+  `${BASE}images/tools/zoominfo.svg`,
+  `${BASE}images/tools/seamless.svg`,
+  `${BASE}images/tools/excel.svg`,
+  `${BASE}images/tools/powerpoint.svg`,
+  `${BASE}images/tools/microsoft-office.svg`,
+  `${BASE}images/tools/chatgpt.svg`,
+  `${BASE}images/tools/claude.svg`,
+  `${BASE}images/tools/marketo.svg`,
+  `${BASE}images/tools/clickup.svg`,
+  `${BASE}images/tools/notion.svg`,
 ];
-const textures = imageUrls.map((url) => textureLoader.load(url));
+const textures = imageUrls.map((url) => {
+  const tex = textureLoader.load(url);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+});
 
-const sphereGeometry = new THREE.SphereGeometry(1, 20, 20);
+const COIN_RADIUS = 1;
+const COIN_HEIGHT = 0.32;
+const coinGeometry = new THREE.CylinderGeometry(
+  COIN_RADIUS,
+  COIN_RADIUS,
+  COIN_HEIGHT,
+  48
+);
 
-const spheres = [...Array(30)].map((_, index) => ({
-  scale: [0.7, 1, 0.8, 1, 1][Math.floor(Math.random() * 5)],
-  materialIndex: index % imageUrls.length,
+const coins = [...Array(33)].map((_, index) => ({
+  scale: [0.85, 1, 0.95, 1, 1.05][Math.floor(Math.random() * 5)],
+  materialIndex: index % 11,
 }));
 
-type SphereProps = {
+type CoinProps = {
   vec?: THREE.Vector3;
   scale: number;
   r?: typeof THREE.MathUtils.randFloatSpread;
@@ -38,13 +55,13 @@ type SphereProps = {
   isActive: boolean;
 };
 
-function SphereGeo({
+function Coin({
   vec = new THREE.Vector3(),
   scale,
   r = THREE.MathUtils.randFloatSpread,
   material,
   isActive,
-}: SphereProps) {
+}: CoinProps) {
   const api = useRef<RapierRigidBody | null>(null);
 
   useFrame((_state, delta) => {
@@ -67,25 +84,22 @@ function SphereGeo({
   return (
     <RigidBody
       linearDamping={0.75}
-      angularDamping={0.15}
-      friction={0.2}
+      angularDamping={0.18}
+      friction={0.25}
       position={[r(20), r(20) - 25, r(20) - 10]}
+      rotation={[r(Math.PI), r(Math.PI), r(Math.PI)]}
       ref={api}
       colliders={false}
     >
-      <BallCollider args={[scale]} />
       <CylinderCollider
-        rotation={[Math.PI / 2, 0, 0]}
-        position={[0, 0, 1.2 * scale]}
-        args={[0.15 * scale, 0.275 * scale]}
+        args={[(COIN_HEIGHT / 2) * scale, COIN_RADIUS * scale]}
       />
       <mesh
         castShadow
         receiveShadow
         scale={scale}
-        geometry={sphereGeometry}
+        geometry={coinGeometry}
         material={material}
-        rotation={[0.3, 1, 1]}
       />
     </RigidBody>
   );
@@ -159,17 +173,18 @@ const TechStack = () => {
           map: texture,
           emissive: "#ffffff",
           emissiveMap: texture,
-          emissiveIntensity: 0.3,
-          metalness: 0.5,
-          roughness: 1,
-          clearcoat: 0.1,
+          emissiveIntensity: 0.18,
+          metalness: 0.25,
+          roughness: 0.55,
+          clearcoat: 0.4,
+          clearcoatRoughness: 0.35,
         })
     );
   }, []);
 
   return (
     <div className="techstack">
-      <h2>Account & Campaign Stack</h2>
+      <h2>Account &amp; Campaign Stack</h2>
 
       <Canvas
         shadows
@@ -192,8 +207,8 @@ const TechStack = () => {
         <directionalLight position={[0, 5, -4]} intensity={2} />
         <Physics gravity={[0, 0, 0]}>
           <Pointer isActive={isActive} />
-          {spheres.map((props, i) => (
-            <SphereGeo
+          {coins.map((props, i) => (
+            <Coin
               key={i}
               {...props}
               material={materials[props.materialIndex]}
