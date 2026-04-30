@@ -1,0 +1,17 @@
+src/components/Character/
+src/components/utils/
+src/components/Loading.tsx
+src/components/WhatIDo.tsx
+src/components/MainContainer.tsx
+src/components/TechStack.tsx
+src/components/TechStackMobile.tsx
+src/components/Career.tsx
+src/components/Work.tsx
+src/components/Landing.tsx
+src/components/About.tsx
+src/components/Contact.tsx
+src/components/Cursor.tsx
+src/components/HoverLinks.tsx
+src/components/SocialIcons.tsx
+src/components/WorkImage.tsx
+src/context/LoadingProvider.tsx

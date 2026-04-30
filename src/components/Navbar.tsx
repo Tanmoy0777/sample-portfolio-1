@@ -1,75 +1,84 @@
-import { useEffect } from "react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import HoverLinks from "./HoverLinks";
-import { gsap } from "gsap";
-import { ScrollSmoother } from "gsap/ScrollSmoother";
-import { navItems, profile } from "../data/portfolio";
-import "./styles/Navbar.css";
+"use client";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { navItems, profile } from "@/data/portfolio";
+import { useCursor } from "@/context/CursorContext";
+import { fadeIn } from "@/lib/animations";
 
-gsap.registerPlugin(ScrollSmoother, ScrollTrigger);
-export let smoother: ScrollSmoother;
+interface NavbarProps {
+  loaded: boolean;
+}
 
-const Navbar = () => {
+export default function Navbar({ loaded }: NavbarProps) {
+  const [scrolled, setScrolled] = useState(false);
+  const { setHover } = useCursor();
+
   useEffect(() => {
-    smoother = ScrollSmoother.create({
-      wrapper: "#smooth-wrapper",
-      content: "#smooth-content",
-      smooth: 1,
-      speed: 1.15,
-      effects: true,
-      autoResize: true,
-      ignoreMobileResize: true,
-      normalizeScroll: true,
-    });
-
-    smoother.scrollTop(0);
-    smoother.paused(true);
-
-    let links = document.querySelectorAll(".header ul a");
-    links.forEach((elem) => {
-      let element = elem as HTMLAnchorElement;
-      element.addEventListener("click", (e) => {
-        if (window.innerWidth > 1024) {
-          e.preventDefault();
-          let elem = e.currentTarget as HTMLAnchorElement;
-          let section = elem.getAttribute("data-href");
-          smoother.scrollTo(section, true, "top top");
-        }
-      });
-    });
-    window.addEventListener("resize", () => {
-      ScrollSmoother.refresh(true);
-    });
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleAnchorClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    e.preventDefault();
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <>
-      <div className="header">
-        <a href="/#" className="navbar-title" data-cursor="disable">
-          {profile.shortName}.
-        </a>
-        <a
-          href={`mailto:${profile.email}`}
-          className="navbar-connect"
-          data-cursor="disable"
-        >
-          {profile.email}
-        </a>
-        <ul>
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <a data-href={item.href} href={item.href}>
-                <HoverLinks text={item.label} />
-              </a>
-            </li>
-          ))}
-        </ul>
+    <motion.nav
+      className="navbar"
+      variants={fadeIn}
+      initial="hidden"
+      animate={loaded ? "visible" : "hidden"}
+      transition={{ delay: 0.2, duration: 0.8 }}
+      style={{
+        backdropFilter: scrolled ? "blur(16px)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(16px)" : "none",
+      }}
+    >
+      {/* Logo */}
+      <motion.a
+        href="#"
+        className="navbar-logo"
+        onClick={(e) => {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        whileHover={{ opacity: 0.7 }}
+        transition={{ duration: 0.2 }}
+      >
+        {profile.initials}
+      </motion.a>
+
+      {/* Links */}
+      <ul className="navbar-links">
+        {navItems.map((item) => (
+          <li key={item.label}>
+            <a
+              href={item.href}
+              onClick={(e) => handleAnchorClick(e, item.href)}
+              onMouseEnter={() => setHover(true)}
+              onMouseLeave={() => setHover(false)}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      {/* Availability */}
+      <div className="navbar-availability">
+        <div className="navbar-dot" />
+        <span>{profile.availability}</span>
       </div>
-
-      <div className="landing-circle1"></div>
-      <div className="landing-circle2"></div>
-      <div className="nav-fade"></div>
-    </>
+    </motion.nav>
   );
-};
-
-export default Navbar;
+}

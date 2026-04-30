@@ -1,0 +1,10 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "ignorePatterns": [
+    "src/components/Character/**",
+    "src/components/utils/**",
+    "src/components/Loading.tsx",
+    "src/components/WhatIDo.tsx",
+    "src/context/LoadingProvider.tsx"
+  ]
+}
